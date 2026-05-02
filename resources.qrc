@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/res">
+        <file>image/player_walk01.png</file>
+        <file>image/background.png</file>
+        <file>image/p_idle.png</file>
+    </qresource>
+</RCC>

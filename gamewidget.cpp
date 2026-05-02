@@ -8,34 +8,38 @@
 #include <QElapsedTimer>
 #include <QKeyEvent>
 #include <QDebug>
+#include <QRandomGenerator>
+
+GameWidget* GameWidget::widget = nullptr;
 
 GameWidget::GameWidget(QWidget *parent)
     : QWidget(parent)
 {
-    // åŸæœ‰çš„çª—å£è®¾ç½®
-    setFixedSize(800, 600);
-    setFocusPolicy(Qt::StrongFocus);  // ç¡®ä¿é”®ç›˜äº‹ä»¶
-    Init_Game();   // ä½ çš„åŸæœ‰å‡½æ•°
-    startTimer();  // å¯åŠ¨å®šæ—¶å™¨
+    // ´°¿ÚÉèÖÃ£º3±¶ÕûÊı·Å´óµ½ 768x768£¬±£³ÖÏñËØÇåÎú
+    setFixedSize(768, 768);
+    setFocusPolicy(Qt::StrongFocus);  // È·±£¼üÅÌÊÂ¼ş
+    Init_Game();   // ÄãµÄÔ­ÓĞº¯Êı
+    startTimer();  // Æô¶¯¶¨Ê±Æ÷
     widget = this;
 
-    loadAnimations();   // åŠ è½½åŠ¨ç”»èµ„æº
+    loadAnimations();   // ¼ÓÔØ¶¯»­×ÊÔ´
     m_player.setClips(&m_idleClip, &m_walkClip, &m_attackClip);
-
-    // åˆ›å»ºå‡ ä¸ªæ•Œäºº
-    m_enemies.append(Enemy(QPointF(200, 300)));
-    m_enemies.append(Enemy(QPointF(600, 400)));
+    m_background.load(":/res/image/background.png");
+    // Ö»´´½¨Ò»¸öµĞÈË£¬ÓÒ²àÖĞ¼äÎ»ÖÃ
+    m_enemies.append(Enemy(QPointF(200, 128)));
+    setAttribute(Qt::WA_NoSystemBackground, true);
+    setAttribute(Qt::WA_PaintOnScreen, false);
 }
 
 void GameWidget::loadAnimations()
 {
-    // å¾…æœºåŠ¨ç”»ï¼šä¸¤å¸§ï¼Œæµ…ç»¿å’Œæ·±ç»¿äº¤æ›¿ï¼Œæ¯å¸§200ms
+    // ´ı»ú¶¯»­£ºÁ½Ö¡£¬Ç³ÂÌºÍÉîÂÌ½»Ìæ£¬Ã¿Ö¡200ms
     QPixmap idle0(40,40); idle0.fill(Qt::lightGray);
     QPixmap idle1(40,40); idle1.fill(Qt::gray);
     m_idleClip.addFrame(idle0, 200);
     m_idleClip.addFrame(idle1, 200);
 
-    // èµ°è·¯åŠ¨ç”»ï¼š4å¸§ï¼Œè“è‰²ç³»
+    // ×ßÂ·¶¯»­£º4Ö¡£¬À¶É«Ïµ
     QPixmap walk0(40,40); walk0.fill(Qt::cyan);
     QPixmap walk1(40,40); walk1.fill(Qt::darkCyan);
     QPixmap walk2(40,40); walk2.fill(Qt::cyan);
@@ -45,7 +49,7 @@ void GameWidget::loadAnimations()
     m_walkClip.addFrame(walk2, 80);
     m_walkClip.addFrame(walk3, 80);
 
-    // æ”»å‡»åŠ¨ç”»ï¼šçº¢è‰²é—ªçƒï¼Œæ¯å¸§50msï¼Œå…±4å¸§
+    // ¹¥»÷¶¯»­£ººìÉ«ÉÁË¸£¬Ã¿Ö¡50ms£¬¹²4Ö¡
     QPixmap att0(40,40); att0.fill(Qt::red);
     QPixmap att1(40,40); att1.fill(Qt::darkRed);
     m_attackClip.addFrame(att0, 50);
@@ -58,61 +62,79 @@ void GameWidget::gameUpdate()
     static QElapsedTimer elapsed;
     if (!elapsed.isValid()) elapsed.start();
     float deltaSec = elapsed.restart() / 1000.0f;
-    if (deltaSec > 0.033f) deltaSec = 0.033f;  // é™åˆ¶æœ€å¤§å¸§é—´éš”
+    if (deltaSec > 0.033f) deltaSec = 0.033f;  // ÏŞÖÆ×î´óÖ¡¼ä¸ô
 
-    if (!isRunning || isStopped) return;  // æ ¹æ®ä½ çš„æ¸¸æˆçŠ¶æ€æ§åˆ¶
+    if (!isRunning || isStopped) return;  // ¸ù¾İÄãµÄÓÎÏ·×´Ì¬¿ØÖÆ
 
-    // 1. æ›´æ–°ç©å®¶
+    // 1. ¸üĞÂÍæ¼Ò
     m_player.update(deltaSec);
 
-    // 2. æ›´æ–°æ•Œäººï¼ˆä¼ å…¥ç©å®¶Xåæ ‡ç”¨äºAIï¼‰
+    // 2. ¸üĞÂµĞÈË£¨´«ÈëÍæ¼Ò×ø±êÓÃÓÚAI£©
     for (auto& enemy : m_enemies) {
-        enemy.update(deltaSec, m_player.getCollisionRect().center().x());
+        enemy.update(deltaSec, m_player.getCollisionRect().center());
     }
 
-    // 3. æ”»å‡»å‘½ä¸­æ£€æµ‹ï¼ˆå¦‚æœç©å®¶æ”»å‡»äº†ï¼Œéœ€è¦åœ¨ç©å®¶attack()ä¸­è§¦å‘ï¼Œæˆ–è€…æ¯å¸§æ£€æµ‹æ”»å‡»å¸§ï¼‰
-    // ç®€å•æ–¹å¼ï¼šåœ¨ç©å®¶attack()è¢«è°ƒç”¨æ—¶ï¼Œæˆ‘ä»¬ç«‹å³æ£€æµ‹ä¸€æ¬¡ç¢°æ’ï¼Œç„¶åå‡å°‘æ•Œäººç”Ÿå‘½ã€‚
-    // æˆ‘ä»¬ç¨åä¼šåœ¨æŒ‰é”®å¤„ç†ä¸­è°ƒç”¨ m_player.attack()ï¼Œç„¶åè°ƒç”¨ checkAttackHit()
+    // 3. ¹¥»÷ÃüÖĞ¼ì²â£¨Èç¹ûÍæ¼Ò¹¥»÷ÁË£¬ĞèÒªÔÚÍæ¼Òattack()ÖĞ´¥·¢£¬»òÕßÃ¿Ö¡¼ì²â¹¥»÷Ö¡£©
+    // ¼òµ¥·½Ê½£ºÔÚÍæ¼Òattack()±»µ÷ÓÃÊ±£¬ÎÒÃÇÁ¢¼´¼ì²âÒ»´ÎÅö×²£¬È»ºó¼õÉÙµĞÈËÉúÃü¡£
+    // ÎÒÃÇÉÔºó»áÔÚ°´¼ü´¦ÀíÖĞµ÷ÓÃ m_player.attack()£¬È»ºóµ÷ÓÃ checkAttackHit()
 
-    // 4. ç§»é™¤æ­»äº¡çš„æ•Œäºº
+    // 4. ÒÆ³ıËÀÍöµÄµĞÈË£¬²¢Á¢¼´Ë¢ĞÂÒ»¸öĞÂµĞÈË
     for (int i = m_enemies.size()-1; i >= 0; --i) {
         if (!m_enemies[i].isAlive()) {
             m_enemies.removeAt(i);
+            m_enemies.append(Enemy(QPointF(200, 128)));
         }
     }
 
-    // 5. æ£€æŸ¥æ¸¸æˆç»“æŸï¼ˆç©å®¶æ­»äº¡ï¼‰
+    // 5. ¼ì²éÓÎÏ·½áÊø£¨Íæ¼ÒËÀÍö£©
     if (!m_player.isAlive()) {
         isRunning = false;
-        // æ˜¾ç¤ºæ¸¸æˆç»“æŸæ–‡å­—ç­‰
+        // ÏÔÊ¾ÓÎÏ·½áÊøÎÄ×ÖµÈ
     }
 
-    // 6. é‡ç»˜
-    update();  // è§¦å‘ paintEvent
+    // 6. ÖØ»æ
+    update();  // ´¥·¢ paintEvent
 }
 
 void GameWidget::paintEvent(QPaintEvent* event)
 {
     Q_UNUSED(event);
-    QPainter painter(this);
-    painter.fillRect(rect(), Qt::black);
 
-    // ç»˜åˆ¶ç©å®¶
-    m_player.draw(&painter);
+    // ´´½¨ÀëÆÁäÖÈ¾»º³å£¨256x256£¬Ô­Ê¼·Ö±æÂÊ£©
+    QPixmap buffer(256, 256);
+    QPainter bufferPainter(&buffer);
 
-    // ç»˜åˆ¶æ‰€æœ‰æ•Œäºº
-    for (const auto& enemy : m_enemies) {
-        enemy.draw(&painter);
+    // 1. ÏÈ»­±³¾°£¨³¹µ×·ÀÉÁË¸£©
+    if (!m_background.isNull()) {
+        bufferPainter.drawPixmap(0, 0, m_background);
+    } else {
+        bufferPainter.fillRect(buffer.rect(), QColor(40, 40, 40));
     }
 
-    // ç»˜åˆ¶UIï¼šç©å®¶è¡€æ¡
+    // 2. ÏñËØ»­¹Ø±ÕÆ½»¬
+    bufferPainter.setRenderHint(QPainter::SmoothPixmapTransform, false);
+
+    // 3. »æÖÆÍæ¼Ò
+    m_player.draw(&bufferPainter);
+
+    // 4. »æÖÆËùÓĞµĞÈË
+    for (const auto& enemy : m_enemies) {
+        enemy.draw(&bufferPainter);
+    }
+
+    // 5. »æÖÆUI£ºÑªÌõ
     int barWidth = 200;
     int barHeight = 20;
-    painter.setBrush(Qt::gray);
-    painter.drawRect(10, 10, barWidth, barHeight);
-    painter.setBrush(Qt::green);
+    bufferPainter.setBrush(Qt::gray);
+    bufferPainter.drawRect(10, 10, barWidth, barHeight);
+    bufferPainter.setBrush(Qt::green);
     int healthPercent = m_player.getHealth() * barWidth / 100;
-    painter.drawRect(10, 10, healthPercent, barHeight);
+    bufferPainter.drawRect(10, 10, healthPercent, barHeight);
+
+    // 6. ÕûÊı±¶Ëõ·Å»æÖÆµ½´°¿Ú£¨¹Ø±ÕÆ½»¬²åÖµ£©
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
+    painter.drawPixmap(rect(), buffer, buffer.rect());
 }
 
 void GameWidget::keyPressEvent(QKeyEvent* event)
@@ -127,12 +149,19 @@ void GameWidget::keyPressEvent(QKeyEvent* event)
     case Qt::Key_Right:
         m_player.setMoveRight(true);
         break;
-    case Qt::Key_J:   // æ”»å‡»
+    case Qt::Key_W:
+    case Qt::Key_Up:
+        m_player.setMoveUp(true);
+        break;
+    case Qt::Key_S:
+    case Qt::Key_Down:
+        m_player.setMoveDown(true);
+        break;
+    case Qt::Key_J:   // ¹¥»÷
         m_player.attack();
-        // æ”»å‡»åç«‹å³æ£€æµ‹å‘½ä¸­ï¼ˆä¹Ÿå¯ä»¥å»¶è¿Ÿä¸€å¸§ï¼Œä½†ä¸ºäº†ç®€å•ï¼Œç›´æ¥æ£€æµ‹ï¼‰
         checkAttackHit();
         break;
-    case Qt::Key_P:   // æš‚åœ
+    case Qt::Key_P:   // ÔİÍ£
         isStopped = !isStopped;
         break;
     }
@@ -149,21 +178,50 @@ void GameWidget::keyReleaseEvent(QKeyEvent* event)
     case Qt::Key_Right:
         m_player.setMoveRight(false);
         break;
+    case Qt::Key_W:
+    case Qt::Key_Up:
+        m_player.setMoveUp(false);
+        break;
+    case Qt::Key_S:
+    case Qt::Key_Down:
+        m_player.setMoveDown(false);
+        break;
     }
 }
 
 void GameWidget::checkAttackHit()
 {
-    // è·å–ç©å®¶ç¢°æ’ç®±
+    // »ñÈ¡Íæ¼ÒÅö×²Ïä
     QRectF playerRect = m_player.getCollisionRect();
     for (int i = 0; i < m_enemies.size(); ++i) {
         if (playerRect.intersects(m_enemies[i].getCollisionRect())) {
-            // é€ æˆä¼¤å®³ï¼ˆå…ˆä½¿ç”¨ç¬¬ä¸€ä¸ªæŠ€èƒ½çš„ä¼¤å®³å€¼ï¼‰
-            int dmg = 10;  // å¯ä»¥æ”¹æˆä»æŠ€èƒ½è·å–
+            // Ôì³ÉÉËº¦£¨ÏÈÊ¹ÓÃµÚÒ»¸ö¼¼ÄÜµÄÉËº¦Öµ£©
+            int dmg = 10;  // ¿ÉÒÔ¸Ä³É´Ó¼¼ÄÜ»ñÈ¡
             m_enemies[i].takeDamage(dmg);
-            // è¿™é‡Œå¯ä»¥æ·»åŠ å‡»é€€æˆ–ç‰¹æ•ˆ
+            // ÕâÀï¿ÉÒÔÌí¼Ó»÷ÍË»òÌØĞ§
         }
     }
+}
+
+void GameWidget::playerMove()
+{
+}
+
+void GameWidget::Init_Game()
+{
+    isRunning = true;
+    isStopped = false;
+}
+
+void GameWidget::startTimer()
+{
+    connect(&m_timer, &QTimer::timeout, this, &GameWidget::gameUpdate);
+    m_timer.start(16);
+}
+
+void GameWidget::stopTimer()
+{
+    m_timer.stop();
 }
 
 GameWidget::~GameWidget() {}

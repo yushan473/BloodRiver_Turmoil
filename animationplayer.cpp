@@ -29,25 +29,42 @@ void AnimationPlayer::update(float deltaSeconds)
     while (m_accumulatorMs >= duration && m_playing)
     {
         m_accumulatorMs -= duration;
-        m_currentFrame++;
-        if (m_currentFrame >= (int)frames.size())
-        {
+
+        // ==========================================
+        // 【修复】先算下一帧，绝不越界！
+        // ==========================================
+        int nextFrame = m_currentFrame + 1;
+        if (nextFrame >= (int)frames.size()) {
             if (m_loop) {
-                m_currentFrame = 0;
+                nextFrame = 0;
             } else {
                 m_currentFrame = (int)frames.size() - 1;
                 m_playing = false;
                 break;
             }
         }
+
+        m_currentFrame = nextFrame;
+
         if (m_playing) duration = frames[m_currentFrame].durationMs;
     }
 }
 
 QPixmap AnimationPlayer::getCurrentFrame() const
 {
-    if (!m_clip || m_clip->frames().empty()) return QPixmap();
-    return m_clip->frames()[m_currentFrame].image;
+    // 1. 空检查
+    if (!m_clip || m_clip->frames().empty())
+        return QPixmap();
+
+    // 2. 【关键修复】强制保证帧下标永远合法！！
+    const auto& frames = m_clip->frames();
+    int frameCount = frames.size();
+
+    // 永远取模，下标 0 ~ frameCount-1，永不越界，永不返回空
+    int safeFrame = m_currentFrame % frameCount;
+
+    // 3. 永远返回有效图片，绝无空帧！
+    return frames[safeFrame].image;
 }
 
 bool AnimationPlayer::isFinished() const

@@ -5,9 +5,9 @@
 
 Player::Player()
 {
-    m_transform.position = {400, 500};  // åˆå§‹ä½ç½®
-    // æ·»åŠ ä¸€ä¸ªç¤ºä¾‹æŠ€èƒ½ï¼ˆå®é™…ç”±å¤–éƒ¨é…ç½®ï¼‰
-    m_skills.emplace_back("æ™®é€šæ”»å‡»", 500, 10, nullptr); // å†·å´0.5ç§’ï¼Œä¼¤å®³10
+    m_transform.position = {50, 200};  // ³õÊ¼Î»ÖÃ£º×ó²à¿¿ÏÂ
+    // Ìí¼ÓÒ»¸öÊ¾Àı¼¼ÄÜ£¨Êµ¼ÊÓÉÍâ²¿ÅäÖÃ£©
+    m_skills.emplace_back("ÆÕÍ¨¹¥»÷", 500, 10, nullptr); // ÀäÈ´0.5Ãë£¬ÉËº¦10
 }
 
 void Player::setClips(AnimationClip* idle, AnimationClip* walk, AnimationClip* attack)
@@ -15,98 +15,104 @@ void Player::setClips(AnimationClip* idle, AnimationClip* walk, AnimationClip* a
     m_idleClip = idle;
     m_walkClip = walk;
     m_attackClip = attack;
-    AnimationClip walkClip;
-    // å‡è®¾ä½ çš„è§’è‰²è¡Œèµ°åŠ¨ç”»æœ‰ 8 å¸§ï¼Œæ¯ 100 æ¯«ç§’åˆ‡æ¢ä¸€å¸§ï¼Œé€Ÿåº¦åˆšåˆšå¥½
-    walkClip.loadFromSpriteSheet(":/image/player_walk01.png", 8, 100);
-    // é»˜è®¤å¼€å§‹å¾…æœºåŠ¨ç”»
-    if (m_idleClip) m_animPlayer.play(m_idleClip, true);
+
+    if (m_walkClip) {
+        m_walkClip->loadFromSpriteSheet(":/res/image/player_walk01.png", 8, 100);
+    }
+
+    if (m_idleClip) {
+        m_idleClip->loadFromSpriteSheet(":/res/image/p_idle.png", 4, 150);
+        m_animPlayer.play(m_idleClip, true);
+    }
 }
 
 void Player::update(float deltaSeconds)
 {
-    // 1. ç§»åŠ¨
-    float move = 0.0f;
-    if (m_leftPressed) move = -1.0f;
-    if (m_rightPressed) move = 1.0f;
-    m_transform.position.rx() += move * m_speed * deltaSeconds;
+    float moveX = 0.0f;
+    float moveY = 0.0f;
+    if (m_leftPressed) moveX = -1.0f;
+    if (m_rightPressed) moveX = 1.0f;
+    if (m_upPressed) moveY = -1.0f;
+    if (m_downPressed) moveY = 1.0f;
+    m_transform.position.rx() += moveX * m_speed * deltaSeconds;
+    m_transform.position.ry() += moveY * m_speed * deltaSeconds;
 
-    // è¾¹ç•Œé™åˆ¶ï¼ˆå‡è®¾æ¸¸æˆåœºæ™¯å®½åº¦800ï¼‰
-    float halfW = 30; // åŠå®½ï¼Œå¯æ”¹ä¸ºä»å½“å‰åŠ¨ç”»å¸§è·å–
+    float halfW = 24;
+    float halfH = 24;
     if (m_transform.position.x() - halfW < 0) m_transform.position.setX(halfW);
-    if (m_transform.position.x() + halfW > 800) m_transform.position.setX(800 - halfW);
+    if (m_transform.position.x() + halfW > 256) m_transform.position.setX(256 - halfW);
+    if (m_transform.position.y() - halfH < 0) m_transform.position.setY(halfH);
+    if (m_transform.position.y() + halfH > 256) m_transform.position.setY(256 - halfH);
 
-    // 2. æ”»å‡»è®¡æ—¶
+    // 2. ¹¥»÷¼ÆÊ±
     if (m_isAttacking) {
         m_attackTimer -= deltaSeconds;
         if (m_attackTimer <= 0.0f) {
             m_isAttacking = false;
-            // æ”»å‡»ç»“æŸï¼Œæ¢å¤ç§»åŠ¨æ—¶çš„åŠ¨ç”»ï¼ˆç”±updateAnimationå¤„ç†ï¼‰
+            // ¹¥»÷½áÊø£¬»Ö¸´ÒÆ¶¯Ê±µÄ¶¯»­£¨ÓÉupdateAnimation´¦Àí£©
         }
     }
 
-    // 3. æ›´æ–°æŠ€èƒ½å†·å´
+    // 3. ¸üĞÂ¼¼ÄÜÀäÈ´
     for (auto& skill : m_skills) {
         skill.updateCooldown(deltaSeconds);
     }
 
-    // 4. æ›´æ–°åŠ¨ç”»ï¼ˆæ ¹æ®å½“å‰çŠ¶æ€ï¼‰
+    // 4. ¸üĞÂ¶¯»­£¨¸ù¾İµ±Ç°×´Ì¬£©
     updateAnimation(deltaSeconds);
     m_animPlayer.update(deltaSeconds);
 }
 
 void Player::updateAnimation(float deltaSeconds)
 {
-    // å¦‚æœæ­£åœ¨æ”»å‡»ï¼Œä¼˜å…ˆæ’­æ”¾æ”»å‡»åŠ¨ç”»ï¼ˆä¸”ä¸åˆ‡æ¢ï¼‰
-    if (m_isAttacking) {
-        // å·²ç»åœ¨æ”»å‡»åŠ¨ç”»ä¸­ï¼Œä¸éœ€è¦é¢å¤–åŠ¨ä½œ
-        return;
-    }
+    Q_UNUSED(deltaSeconds);
+    if (m_isAttacking) return;
 
-    // æ ¹æ®ç§»åŠ¨è¾“å…¥å†³å®šå¾…æœº/èµ°è·¯
-    bool moving = (m_leftPressed || m_rightPressed);
-    if (moving && m_walkClip && m_animPlayer.isPlaying() && m_animPlayer.getCurrentFrame().isNull()) {
-        m_animPlayer.play(m_walkClip, true);
-    } else if (!moving && m_idleClip && (m_animPlayer.isPlaying() && m_animPlayer.getCurrentFrame().isNull())) {
-        m_animPlayer.play(m_idleClip, true);
+    bool moving = (m_leftPressed || m_rightPressed || m_upPressed || m_downPressed);
+    if (moving) {
+        if (m_walkClip && (!m_animPlayer.isPlaying() || m_animPlayer.isFinished())) {
+            m_animPlayer.play(m_walkClip, true);
+        }
+    } else {
+        if (m_idleClip && (!m_animPlayer.isPlaying() || m_animPlayer.isFinished())) {
+            m_animPlayer.play(m_idleClip, true);
+        }
     }
 }
 
 void Player::attack()
 {
-    if (m_isAttacking) return;  // æ”»å‡»åŠ¨ç”»æœªç»“æŸ
+    if (m_isAttacking) return;  // ¹¥»÷¶¯»­Î´½áÊø
     if (m_skills.empty()) return;
     Skill& skill = m_skills[0];
     if (!skill.canCast()) return;
 
-    // æ–½æ”¾æŠ€èƒ½ï¼ˆè§¦å‘å†·å´ï¼‰
+    // Ê©·Å¼¼ÄÜ£¨´¥·¢ÀäÈ´£©
     skill.cast();
 
-    // æ’­æ”¾æ”»å‡»åŠ¨ç”»
+    // ²¥·Å¹¥»÷¶¯»­
     if (m_attackClip) {
         m_animPlayer.play(m_attackClip, false);
         m_isAttacking = true;
-        m_attackTimer = 0.3f;   // å‡è®¾æ”»å‡»åŠ¨ç”»æŒç»­0.3ç§’ï¼Œä¹‹åè‡ªåŠ¨ç»“æŸ
+        m_attackTimer = 0.3f;   // ¼ÙÉè¹¥»÷¶¯»­³ÖĞø0.3Ãë£¬Ö®ºó×Ô¶¯½áÊø
     }
-    // ä¼¤å®³åˆ¤å®šå®é™…åº”ç”± GameWidget åœ¨æ”»å‡»ç¬é—´æ£€æµ‹ä¸æ•Œäººçš„ç¢°æ’ï¼Œè¿™é‡Œæˆ‘ä»¬ç¨åå®ç°
+    // ÉËº¦ÅĞ¶¨Êµ¼ÊÓ¦ÓÉ GameWidget ÔÚ¹¥»÷Ë²¼ä¼ì²âÓëµĞÈËµÄÅö×²£¬ÕâÀïÎÒÃÇÉÔºóÊµÏÖ
 }
 
 void Player::draw(QPainter* painter) const
 {
     QPixmap frame = m_animPlayer.getCurrentFrame();
+
     if (!frame.isNull()) {
-        painter->drawPixmap(m_transform.position.x() - frame.width()/2,
-                            m_transform.position.y() - frame.height()/2,
-                            frame);
-    } else {
-        // fallbackï¼šç»˜åˆ¶ä¸€ä¸ªçŸ©å½¢
-        painter->setBrush(Qt::green);
-        painter->drawRect(m_transform.position.x() - 20, m_transform.position.y() - 20, 40, 40);
+        int x = m_transform.position.x() - 24;
+        int y = m_transform.position.y() - 24;
+        painter->drawPixmap(x, y, frame);
     }
 }
 
 QRectF Player::getCollisionRect() const
 {
-    // æš‚æ—¶ç”¨å›ºå®šå°ºå¯¸40x40ï¼Œå¯æ”¹ä¸ºä»å½“å‰å¸§è·å–
+    // ÔİÊ±ÓÃ¹Ì¶¨³ß´ç40x40£¬¿É¸ÄÎª´Óµ±Ç°Ö¡»ñÈ¡
     return QRectF(m_transform.position.x() - 20, m_transform.position.y() - 20, 40, 40);
 }
 

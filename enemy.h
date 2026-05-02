@@ -10,7 +10,7 @@ class Enemy :public Entity
 public:
     Enemy(const QPointF& pos);
 
-    void update(float deltaSeconds, float playerX);
+    void update(float deltaSeconds, const QPointF& playerPos);
     void update(float deltaSeconds)override;
     void draw(QPainter* painter) const override;
 
@@ -22,8 +22,11 @@ private:
     Transform m_transform;
     AnimationPlayer m_animPlayer;
     int m_health = 30;
-    float m_speed = 80.0f;   // 移动速度
-    int m_direction = 1;      // 1右 -1左
+    float m_speed = 50.0f;
+    int m_directionX = 1;
+    int m_directionY = 1;
+    float m_lastPlayerX = 0.0f;
+    float m_lastPlayerY = 0.0f;
 };
 
 #endif // ENEMY_H

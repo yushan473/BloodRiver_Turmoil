@@ -13,24 +13,26 @@ class Player : public Entity
 {
 public:
     Player();
-    //entityæ¥å£
+    //entity½Ó¿Ú
     void update(float deltaSeconds)override;
     void draw(QPainter* painter) const override;
 
-    // ç¢°æ’ç®±ï¼ˆç”¨äºæ”»å‡»åˆ¤å®šï¼‰
+    // Åö×²Ïä£¨ÓÃÓÚ¹¥»÷ÅĞ¶¨£©
     QRectF getCollisionRect() const override;
 
-    // å±æ€§
+    // ÊôĞÔ
     int getHealth() const override { return m_health; }
     void takeDamage(int amount)override;
     bool isAlive() const override { return m_health > 0; }
 
-    //ç©å®¶æ¥å£
-    // è¾“å…¥æ§åˆ¶
+    //Íæ¼Ò½Ó¿Ú
+    // ÊäÈë¿ØÖÆ
     void setMoveLeft(bool pressed) { m_leftPressed = pressed; }
     void setMoveRight(bool pressed) { m_rightPressed = pressed; }
-    void attack();   // ä½¿ç”¨ç¬¬ä¸€ä¸ªæŠ€èƒ½
-    // è®¾ç½®åŠ¨ç”»èµ„æºï¼ˆç”± GameWidget åœ¨åˆå§‹åŒ–æ—¶æä¾›ï¼‰
+    void setMoveUp(bool pressed) { m_upPressed = pressed; }
+    void setMoveDown(bool pressed) { m_downPressed = pressed; }
+    void attack();   // Ê¹ÓÃµÚÒ»¸ö¼¼ÄÜ
+    // ÉèÖÃ¶¯»­×ÊÔ´£¨ÓÉ GameWidget ÔÚ³õÊ¼»¯Ê±Ìá¹©£©
     void setClips(AnimationClip* idle, AnimationClip* walk, AnimationClip* attack);
 
 private:
@@ -40,21 +42,23 @@ private:
     int m_health = 100;
     int m_maxHealth = 100;
 
-    // ç§»åŠ¨å‚æ•°
-    float m_speed = 300.0f;   // åƒç´ /ç§’
+    // ÒÆ¶¯²ÎÊı
+    float m_speed = 300.0f;   // ÏñËØ/Ãë
     bool m_leftPressed = false;
     bool m_rightPressed = false;
+    bool m_upPressed = false;
+    bool m_downPressed = false;
 
-    // æ”»å‡»çŠ¶æ€
+    // ¹¥»÷×´Ì¬
     bool m_isAttacking = false;
     float m_attackTimer = 0.0f;
 
-    // åŠ¨ç”»å‰ªè¾‘æŒ‡é’ˆï¼ˆç”±å¤–éƒ¨ä¼ å…¥ï¼Œèµ„æºå¯å…±äº«ï¼‰
+    // ¶¯»­¼ô¼­Ö¸Õë£¨ÓÉÍâ²¿´«Èë£¬×ÊÔ´¿É¹²Ïí£©
     AnimationClip* m_idleClip = nullptr;
     AnimationClip* m_walkClip = nullptr;
     AnimationClip* m_attackClip = nullptr;
 
-    // å†…éƒ¨æ›´æ–°åŠ¨ç”»çŠ¶æ€
+    // ÄÚ²¿¸üĞÂ¶¯»­×´Ì¬
     void updateAnimation(float deltaSeconds);
 };
 

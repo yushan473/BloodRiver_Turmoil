@@ -5,24 +5,40 @@
 Enemy::Enemy(const QPointF& pos)
 {
     m_transform.position = pos;
-    // ç®€å•ç”Ÿæˆä¸€ä¸ªçº¢è‰²çŸ©å½¢ä½œä¸ºåŠ¨ç”»ï¼ˆæš‚æ—¶ä¸ç”¨çœŸæ­£çš„åŠ¨ç”»å‰ªè¾‘ï¼‰
-    // ä¸ºäº†æ¼”ç¤ºï¼Œæˆ‘ä»¬æ‰‹åŠ¨åˆ›å»ºä¸€ä¸ªå•å¸§åŠ¨ç”»å‰ªè¾‘
+    // ¼òµ¥Éú³ÉÒ»¸öºìÉ«¾ØĞÎ×÷Îª¶¯»­£¨ÔİÊ±²»ÓÃÕæÕıµÄ¶¯»­¼ô¼­£©
+    // ÎªÁËÑİÊ¾£¬ÎÒÃÇÊÖ¶¯´´½¨Ò»¸öµ¥Ö¡¶¯»­¼ô¼­
 }
 
-void Enemy::update(float deltaSeconds, float playerX)
+void Enemy::update(float deltaSeconds, const QPointF& playerPos)
 {
-    // ç®€å• AIï¼šå‘ç©å®¶æ–¹å‘ç§»åŠ¨
-    if (playerX > m_transform.position.x()) m_direction = 1;
-    else if (playerX < m_transform.position.x()) m_direction = -1;
-    m_transform.position.rx() += m_direction * m_speed * deltaSeconds;
+    float dx = playerPos.x() - m_transform.position.x();
+    float dy = playerPos.y() - m_transform.position.y();
+    float dist = qSqrt(dx * dx + dy * dy);
+    if (dist > 1.0f) {
+        m_directionX = (dx > 0) ? 1 : -1;
+        m_directionY = (dy > 0) ? 1 : -1;
+    }
+    m_transform.position.rx() += m_directionX * m_speed * deltaSeconds;
+    m_transform.position.ry() += m_directionY * m_speed * deltaSeconds;
 
-    // è¾¹ç•Œé™åˆ¶ï¼ˆå¯é€‰ï¼‰
-    // æ›´æ–°åŠ¨ç”»ï¼ˆå¯çœç•¥ï¼‰
+    float margin = 20.0f;
+    if (m_transform.position.x() < margin) m_transform.position.setX(margin);
+    if (m_transform.position.x() > 256 - margin) m_transform.position.setX(256 - margin);
+    if (m_transform.position.y() < margin) m_transform.position.setY(margin);
+    if (m_transform.position.y() > 256 - margin) m_transform.position.setY(256 - margin);
+
+    m_lastPlayerX = playerPos.x();
+    m_lastPlayerY = playerPos.y();
+}
+
+void Enemy::update(float deltaSeconds)
+{
+    Q_UNUSED(deltaSeconds);
 }
 
 void Enemy::draw(QPainter* painter) const
 {
-    // æš‚æ—¶ç”¨çº¢è‰²çŸ©å½¢ç»˜åˆ¶
+    // ÔİÊ±ÓÃºìÉ«¾ØĞÎ»æÖÆ
     painter->setBrush(Qt::red);
     painter->drawRect(m_transform.position.x() - 20, m_transform.position.y() - 20, 40, 40);
 }
@@ -35,5 +51,5 @@ QRectF Enemy::getCollisionRect() const
 void Enemy::takeDamage(int damage)
 {
     m_health -= damage;
-    // å¯ä»¥æ·»åŠ å—å‡»é—ªçƒæ•ˆæœï¼Œæš‚æ—¶å¿½ç•¥
+    // ¿ÉÒÔÌí¼ÓÊÜ»÷ÉÁË¸Ğ§¹û£¬ÔİÊ±ºöÂÔ
 }

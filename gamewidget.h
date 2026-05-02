@@ -4,6 +4,7 @@
 #include <QWidget>
 #include<QTimer>
 #include<QMouseEvent>
+#include<QPaintEvent>
 #include<QList>
 #include<QProgressBar>
 #include<QLabel>
@@ -26,34 +27,37 @@ class GameWidget : public QWidget
 public:
     GameWidget(QWidget *parent = nullptr);
     ~GameWidget();
-    //åˆå§‹åŒ–
+    //³õÊ¼»¯
     void Init_Game();
     void startTimer();
     void stopTimer();
-    //æ¸¸æˆçŠ¶æ€
-    bool isRunning = 0;//æ˜¯å¦è¿›è¡Œä¸­
-    bool isChoosing = 0;//æ˜¯å¦é€‰æ‹©æŠ€èƒ½
-    bool isStopped = 0;//æ˜¯å¦æš‚åœ
-    bool isPressed = 0;//æ˜¯å¦æŒ‰ä½é¼ æ ‡
-    //è¾“å…¥äº‹ä»¶
+    //ÓÎÏ·×´Ì¬
+    bool isRunning = 0;//ÊÇ·ñ½øĞĞÖĞ
+    bool isChoosing = 0;//ÊÇ·ñÑ¡Ôñ¼¼ÄÜ
+    bool isStopped = 0;//ÊÇ·ñÔİÍ£
+    bool isPressed = 0;//ÊÇ·ñ°´×¡Êó±ê
+    //ÊäÈëÊÂ¼ş
     void keyPressEvent(QKeyEvent* event) override;
     void keyReleaseEvent(QKeyEvent* event)override;
-    //ç©å®¶ç§»åŠ¨
+    void paintEvent(QPaintEvent* event) override;
+    //Íæ¼ÒÒÆ¶¯
     void playerMove();
-    //è·å–å®ä¾‹
+    //»ñÈ¡ÊµÀı
     static GameWidget* widget;
 private slots:
     void gameUpdate();
 private:
     Player m_player;
     QList<Enemy> m_enemies;
+    QPixmap m_background;
     AnimationClip m_idleClip;
     AnimationClip m_walkClip;
     AnimationClip m_attackClip;
+    QTimer m_timer;
 
-    // è¾…åŠ©å‡½æ•°
-    void loadAnimations();         // åˆ›å»ºæµ‹è¯•åŠ¨ç”»ï¼ˆç”¨çº¯è‰²çŸ©å½¢ï¼‰
-    void checkAttackHit();         // æ”»å‡»å‘½ä¸­æ£€æµ‹
+    // ¸¨Öúº¯Êı
+    void loadAnimations();         // ´´½¨²âÊÔ¶¯»­£¨ÓÃ´¿É«¾ØĞÎ£©
+    void checkAttackHit();         // ¹¥»÷ÃüÖĞ¼ì²â
 
 };
 #endif // GAMEWIDGET_H
