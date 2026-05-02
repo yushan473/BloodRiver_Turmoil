@@ -16,12 +16,14 @@ void Player::setClips(AnimationClip* idle, AnimationClip* walk, AnimationClip* a
     m_walkClip = walk;
     m_attackClip = attack;
 
+    // 加载走路动画（横向精灵表，8帧）
     if (m_walkClip) {
         m_walkClip->loadFromSpriteSheet(":/res/image/player_walk01.png", 8, 100);
     }
 
+    // 加载待机动画（横向精灵表，3帧）
     if (m_idleClip) {
-        m_idleClip->loadFromSpriteSheet(":/res/image/p_idle.png", 4, 150);
+        m_idleClip->loadFromSpriteSheet(":/res/image/p_idle.png", 3, 150);
         m_animPlayer.play(m_idleClip, true);
     }
 }
@@ -37,12 +39,13 @@ void Player::update(float deltaSeconds)
     m_transform.position.rx() += moveX * m_speed * deltaSeconds;
     m_transform.position.ry() += moveY * m_speed * deltaSeconds;
 
+    // 边界限制：允许玩家走到屏幕边缘，48x48精灵完整显示
     float halfW = 24;
     float halfH = 24;
-    if (m_transform.position.x() - halfW < 0) m_transform.position.setX(halfW);
-    if (m_transform.position.x() + halfW > 256) m_transform.position.setX(256 - halfW);
-    if (m_transform.position.y() - halfH < 0) m_transform.position.setY(halfH);
-    if (m_transform.position.y() + halfH > 256) m_transform.position.setY(256 - halfH);
+    if (m_transform.position.x() < halfW) m_transform.position.setX(halfW);
+    if (m_transform.position.x() > 256 - halfW) m_transform.position.setX(256 - halfW);
+    if (m_transform.position.y() < halfH) m_transform.position.setY(halfH);
+    if (m_transform.position.y() > 256 - halfH) m_transform.position.setY(256 - halfH);
 
     // 2. 攻击计时
     if (m_isAttacking) {
@@ -69,12 +72,15 @@ void Player::updateAnimation(float deltaSeconds)
     if (m_isAttacking) return;
 
     bool moving = (m_leftPressed || m_rightPressed || m_upPressed || m_downPressed);
+    
     if (moving) {
-        if (m_walkClip && (!m_animPlayer.isPlaying() || m_animPlayer.isFinished())) {
+        // 正在移动，播放走路动画
+        if (m_walkClip && m_animPlayer.getCurrentClip() != m_walkClip) {
             m_animPlayer.play(m_walkClip, true);
         }
     } else {
-        if (m_idleClip && (!m_animPlayer.isPlaying() || m_animPlayer.isFinished())) {
+        // 停止移动，播放待机动画
+        if (m_idleClip && m_animPlayer.getCurrentClip() != m_idleClip) {
             m_animPlayer.play(m_idleClip, true);
         }
     }

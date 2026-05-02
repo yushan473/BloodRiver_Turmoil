@@ -15,13 +15,13 @@ class AnimationClip
 public:
     AnimationClip();
 
-    // ä»æ°´å¹³ç²¾çµè¡¨åŠ è½½ï¼ˆæ¯å¸§ç­‰å®½ï¼‰
+    // ´ÓË®Æ½¾«Áé±í¼ÓÔØ£¨Ã¿Ö¡µÈ¿í£©
     void loadFromSpriteSheet(const QString& path, int frameCount, int frameDurationMs);
 
-    // æ‰‹åŠ¨æ·»åŠ ä¸€å¸§ï¼ˆç”¨äºæµ‹è¯•orç¨‹åºç”Ÿæˆï¼‰
+    // ÊÖ¶¯Ìí¼ÓÒ»Ö¡£¨ÓÃÓÚ²âÊÔor³ÌĞòÉú³É£©
     void addFrame(const QPixmap& pix, int durationMs);
 
-    // è·å–æ‰€æœ‰å¸§
+    // »ñÈ¡ËùÓĞÖ¡
     const std::vector<Frame>& frames() const { return m_frames; }
     bool isValid() const { return !m_frames.empty(); }
 

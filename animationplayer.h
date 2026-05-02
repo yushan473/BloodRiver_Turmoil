@@ -8,13 +8,14 @@ class AnimationPlayer
 public:
     AnimationPlayer();
 
-    // æ’­æ”¾æŒ‡å®šçš„å‰ªè¾‘ï¼Œloopæ˜¯å¦å¾ªç¯
+    // ²¥·ÅÖ¸¶¨µÄ¼ô¼­£¬loopÊÇ·ñÑ­»·
     void play(const AnimationClip* clip, bool loop = false);
     void stop();
-    void update(float deltaSeconds);   // æ¯å¸§è°ƒç”¨
+    void update(float deltaSeconds);   // Ã¿Ö¡µ÷ÓÃ
     QPixmap getCurrentFrame() const;
     bool isPlaying() const { return m_playing; }
-    bool isFinished() const;   // éå¾ªç¯åŠ¨ç”»æ˜¯å¦æ’­æ”¾å®Œæ¯•
+    bool isFinished() const;   // ·ÇÑ­»·¶¯»­ÊÇ·ñ²¥·ÅÍê±Ï
+    const AnimationClip* getCurrentClip() const { return m_clip; }
 
 private:
     const AnimationClip* m_clip = nullptr;
