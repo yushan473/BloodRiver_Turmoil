@@ -1,7 +1,13 @@
 <RCC>
     <qresource prefix="/res">
         <file>image/player_walk01.png</file>
-        <file>image/background.png</file>
         <file>image/p_idle.png</file>
+        <file>image/player_attack_lv2.png</file>
+        <file>image/enemy_Suze_attack.png</file>
+        <file>image/npc_Suzhi_idle.png</file>
+        <file>image/enemy_Xieqianji_attack.png</file>
+        <file>image/enemy_Muyinzhen_attack.png</file>
+        <file>image/player_attack_lv1.png</file>
+        <file>image/background.png</file>
     </qresource>
 </RCC>

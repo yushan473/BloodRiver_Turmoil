@@ -3,6 +3,8 @@ QT       += core gui widgets multimedia
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
+CONFIG += utf8_source
+CODECFORSRC = UTF-8
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -15,6 +17,7 @@ SOURCES += \
     entity.cpp \
     gamewidget.cpp \
     main.cpp \
+    npc.cpp \
     player.cpp \
     skill.cpp
 
@@ -24,6 +27,7 @@ HEADERS += \
     enemy.h \
     entity.h \
     gamewidget.h \
+    npc.h \
     player.h \
     skill.h \
     transform.h

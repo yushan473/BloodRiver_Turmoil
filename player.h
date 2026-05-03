@@ -13,27 +13,24 @@ class Player : public Entity
 {
 public:
     Player();
-    //entity接口
     void update(float deltaSeconds)override;
     void draw(QPainter* painter) const override;
 
-    // 碰撞箱（用于攻击判定）
     QRectF getCollisionRect() const override;
+    QRectF getAttackRange() const;
 
-    // 属性
     int getHealth() const override { return m_health; }
     void takeDamage(int amount)override;
     bool isAlive() const override { return m_health > 0; }
 
-    //玩家接口
-    // 输入控制
     void setMoveLeft(bool pressed) { m_leftPressed = pressed; }
     void setMoveRight(bool pressed) { m_rightPressed = pressed; }
-    void setMoveUp(bool pressed) { m_upPressed = pressed; }
-    void setMoveDown(bool pressed) { m_downPressed = pressed; }
-    void attack();   // 使用第一个技能
-    // 设置动画资源（由 GameWidget 在初始化时提供）
-    void setClips(AnimationClip* idle, AnimationClip* walk, AnimationClip* attack);
+    void setJump(bool pressed) { m_jumpPressed = pressed; }
+    void attack(int skillIndex = 0);
+
+    void setClips(AnimationClip* idle, AnimationClip* walk, AnimationClip* attack1, AnimationClip* attack2);
+
+    bool isOnGround() const { return m_isOnGround; }
 
 private:
     Transform m_transform;
@@ -42,23 +39,25 @@ private:
     int m_health = 100;
     int m_maxHealth = 100;
 
-    // 移动参数
-    float m_speed = 300.0f;   // 像素/秒
+    float m_speed = 300.0f;
     bool m_leftPressed = false;
     bool m_rightPressed = false;
-    bool m_upPressed = false;
-    bool m_downPressed = false;
+    bool m_jumpPressed = false;
 
-    // 攻击状态
     bool m_isAttacking = false;
     float m_attackTimer = 0.0f;
+    int m_currentAttackSkill = 0;
 
-    // 动画剪辑指针（由外部传入，资源可共享）
+    bool m_isOnGround = true;
+    float m_velocityY = 0.0f;
+    static constexpr float m_gravity = 700.0f;
+    static constexpr float m_jumpForce = -245.0f;
+
     AnimationClip* m_idleClip = nullptr;
     AnimationClip* m_walkClip = nullptr;
-    AnimationClip* m_attackClip = nullptr;
+    AnimationClip* m_attackLv1Clip = nullptr;
+    AnimationClip* m_attackLv2Clip = nullptr;
 
-    // 内部更新动画状态
     void updateAnimation(float deltaSeconds);
 };
 

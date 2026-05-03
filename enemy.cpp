@@ -1,34 +1,82 @@
 #include "Enemy.h"
 #include <QPainter>
 #include <QtMath>
+#include <cstdlib>
 
-Enemy::Enemy(const QPointF& pos)
+Enemy::Enemy(const QPointF& pos, EnemyType type)
+    : m_type(type)
 {
     m_transform.position = pos;
-    // 简单生成一个红色矩形作为动画（暂时不用真正的动画剪辑）
-    // 为了演示，我们手动创建一个单帧动画剪辑
+    initEnemyStats(type);
+}
+
+void Enemy::initEnemyStats(EnemyType type)
+{
+    switch (type) {
+    case Xieqianji:
+        m_health = 20;
+        m_maxHealth = 20;
+        m_speed = 55.0f;
+        break;
+    case Muyinzhen:
+        m_health = 50;
+        m_maxHealth = 50;
+        m_speed = 42.0f;
+        break;
+    case Suze:
+        m_health = 80;
+        m_maxHealth = 80;
+        m_speed = 48.0f;
+        break;
+    }
+}
+
+void Enemy::setAttackClip(AnimationClip* clip)
+{
+    m_attackClip = clip;
+    if (m_attackClip) {
+        m_animPlayer.play(m_attackClip, true);
+    }
 }
 
 void Enemy::update(float deltaSeconds, const QPointF& playerPos)
 {
     float dx = playerPos.x() - m_transform.position.x();
-    float dy = playerPos.y() - m_transform.position.y();
-    float dist = qSqrt(dx * dx + dy * dy);
-    if (dist > 1.0f) {
+    float dist = qSqrt(dx * dx);
+
+    const float minDistance = 30.0f;
+    if (dist > minDistance) {
         m_directionX = (dx > 0) ? 1 : -1;
-        m_directionY = (dy > 0) ? 1 : -1;
+        m_transform.position.rx() += m_directionX * m_speed * deltaSeconds;
     }
-    m_transform.position.rx() += m_directionX * m_speed * deltaSeconds;
-    m_transform.position.ry() += m_directionY * m_speed * deltaSeconds;
 
     float margin = 20.0f;
     if (m_transform.position.x() < margin) m_transform.position.setX(margin);
     if (m_transform.position.x() > 256 - margin) m_transform.position.setX(256 - margin);
-    if (m_transform.position.y() < margin) m_transform.position.setY(margin);
-    if (m_transform.position.y() > 256 - margin) m_transform.position.setY(256 - margin);
+
+    if (m_type != Muyinzhen) {
+        if (m_isOnGround && (rand() % 200) == 0) {
+            m_velocityY = m_jumpForce;
+            m_isOnGround = false;
+        }
+
+        if (!m_isOnGround) {
+            m_velocityY += m_gravity * deltaSeconds;
+            m_transform.position.ry() += m_velocityY * deltaSeconds;
+
+            const float groundY = 192.0f;
+            if (m_transform.position.y() >= groundY) {
+                m_transform.position.setY(groundY);
+                m_velocityY = 0.0f;
+                m_isOnGround = true;
+            }
+        }
+    }
 
     m_lastPlayerX = playerPos.x();
     m_lastPlayerY = playerPos.y();
+
+    m_animPlayer.update(deltaSeconds);
 }
 
 void Enemy::update(float deltaSeconds)
@@ -38,18 +86,40 @@ void Enemy::update(float deltaSeconds)
 
 void Enemy::draw(QPainter* painter) const
 {
-    // 暂时用红色矩形绘制
-    painter->setBrush(Qt::red);
-    painter->drawRect(m_transform.position.x() - 20, m_transform.position.y() - 20, 40, 40);
+    int drawX = m_transform.position.x();
+    int drawY = m_transform.position.y();
+
+    QPixmap frame = m_animPlayer.getCurrentFrame();
+    if (!frame.isNull()) {
+        int halfW = frame.width() / 2;
+        int halfH = frame.height() / 2;
+        painter->drawPixmap(drawX - halfW, drawY - halfH, frame);
+
+        float healthPercent = (float)m_health / m_maxHealth;
+        int barWidth = 32;
+        int barHeight = 4;
+        int barX = m_transform.position.x() - barWidth / 2;
+        int barY = m_transform.position.y() - frame.height() / 2 - 8;
+
+        painter->setBrush(QColor(58, 58, 58));
+        painter->drawRect(barX, barY, barWidth, barHeight);
+        painter->setBrush(QColor(126, 140, 132));
+        painter->drawRect(barX, barY, barWidth * healthPercent, barHeight);
+        painter->setPen(QColor(136, 136, 136));
+        painter->drawRect(barX, barY, barWidth, barHeight);
+    }
 }
 
 QRectF Enemy::getCollisionRect() const
 {
-    return QRectF(m_transform.position.x() - 20, m_transform.position.y() - 20, 40, 40);
+    QPixmap frame = m_animPlayer.getCurrentFrame();
+    int w = frame.width() > 0 ? frame.width() : 24;
+    int h = frame.height() > 0 ? frame.height() : 48;
+    return QRectF(m_transform.position.x() - w/2, m_transform.position.y() - h, w, h);
 }
 
 void Enemy::takeDamage(int damage)
 {
     m_health -= damage;
-    // 可以添加受击闪烁效果，暂时忽略
+    if (m_health < 0) m_health = 0;
 }

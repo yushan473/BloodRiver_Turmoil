@@ -5,63 +5,76 @@
 
 Player::Player()
 {
-    m_transform.position = {50, 200};  // 初始位置：左侧靠下
-    // 添加一个示例技能（实际由外部配置）
-    m_skills.emplace_back("普通攻击", 500, 10, nullptr); // 冷却0.5秒，伤害10
+    m_transform.position = {50, 192};
+    m_skills.emplace_back("防守技能", 0, 5, nullptr);
+    m_skills.emplace_back("攻击技能", 0, 10, nullptr);
 }
 
-void Player::setClips(AnimationClip* idle, AnimationClip* walk, AnimationClip* attack)
+void Player::setClips(AnimationClip* idle, AnimationClip* walk, AnimationClip* attack1, AnimationClip* attack2)
 {
     m_idleClip = idle;
     m_walkClip = walk;
-    m_attackClip = attack;
+    m_attackLv1Clip = attack1;
+    m_attackLv2Clip = attack2;
 
-    // 加载走路动画（横向精灵表，8帧）
     if (m_walkClip) {
         m_walkClip->loadFromSpriteSheet(":/res/image/player_walk01.png", 8, 100);
     }
 
-    // 加载待机动画（横向精灵表，3帧）
     if (m_idleClip) {
         m_idleClip->loadFromSpriteSheet(":/res/image/p_idle.png", 3, 150);
         m_animPlayer.play(m_idleClip, true);
+    }
+
+    if (m_attackLv1Clip) {
+        m_attackLv1Clip->loadFromSpriteSheet(":/res/image/player_attack_lv1.png", 14, 70);
+    }
+
+    if (m_attackLv2Clip) {
+        m_attackLv2Clip->loadFromSpriteSheet(":/res/image/player_attack_lv2.png", 13, 77);
     }
 }
 
 void Player::update(float deltaSeconds)
 {
     float moveX = 0.0f;
-    float moveY = 0.0f;
     if (m_leftPressed) moveX = -1.0f;
     if (m_rightPressed) moveX = 1.0f;
-    if (m_upPressed) moveY = -1.0f;
-    if (m_downPressed) moveY = 1.0f;
     m_transform.position.rx() += moveX * m_speed * deltaSeconds;
-    m_transform.position.ry() += moveY * m_speed * deltaSeconds;
 
-    // 边界限制：允许玩家走到屏幕边缘，48x48精灵完整显示
     float halfW = 24;
-    float halfH = 24;
     if (m_transform.position.x() < halfW) m_transform.position.setX(halfW);
     if (m_transform.position.x() > 256 - halfW) m_transform.position.setX(256 - halfW);
-    if (m_transform.position.y() < halfH) m_transform.position.setY(halfH);
-    if (m_transform.position.y() > 256 - halfH) m_transform.position.setY(256 - halfH);
 
-    // 2. 攻击计时
+    if (m_jumpPressed && m_isOnGround) {
+        m_velocityY = m_jumpForce;
+        m_isOnGround = false;
+        m_jumpPressed = false;
+    }
+
+    if (!m_isOnGround) {
+        m_velocityY += m_gravity * deltaSeconds;
+        m_transform.position.ry() += m_velocityY * deltaSeconds;
+
+        const float groundY = 192.0f;
+        if (m_transform.position.y() >= groundY) {
+            m_transform.position.setY(groundY);
+            m_velocityY = 0.0f;
+            m_isOnGround = true;
+        }
+    }
+
     if (m_isAttacking) {
         m_attackTimer -= deltaSeconds;
         if (m_attackTimer <= 0.0f) {
             m_isAttacking = false;
-            // 攻击结束，恢复移动时的动画（由updateAnimation处理）
         }
     }
 
-    // 3. 更新技能冷却
     for (auto& skill : m_skills) {
         skill.updateCooldown(deltaSeconds);
     }
 
-    // 4. 更新动画（根据当前状态）
     updateAnimation(deltaSeconds);
     m_animPlayer.update(deltaSeconds);
 }
@@ -71,38 +84,35 @@ void Player::updateAnimation(float deltaSeconds)
     Q_UNUSED(deltaSeconds);
     if (m_isAttacking) return;
 
-    bool moving = (m_leftPressed || m_rightPressed || m_upPressed || m_downPressed);
-    
+    bool moving = (m_leftPressed || m_rightPressed);
+
     if (moving) {
-        // 正在移动，播放走路动画
         if (m_walkClip && m_animPlayer.getCurrentClip() != m_walkClip) {
             m_animPlayer.play(m_walkClip, true);
         }
     } else {
-        // 停止移动，播放待机动画
         if (m_idleClip && m_animPlayer.getCurrentClip() != m_idleClip) {
             m_animPlayer.play(m_idleClip, true);
         }
     }
 }
 
-void Player::attack()
+void Player::attack(int skillIndex)
 {
-    if (m_isAttacking) return;  // 攻击动画未结束
-    if (m_skills.empty()) return;
-    Skill& skill = m_skills[0];
-    if (!skill.canCast()) return;
+    if (m_isAttacking) return;
+    if (skillIndex < 0 || skillIndex >= (int)m_skills.size()) return;
 
-    // 施放技能（触发冷却）
+    m_currentAttackSkill = skillIndex;
+    Skill& skill = m_skills[skillIndex];
+
     skill.cast();
 
-    // 播放攻击动画
-    if (m_attackClip) {
-        m_animPlayer.play(m_attackClip, false);
+    AnimationClip* clip = (skillIndex == 0) ? m_attackLv1Clip : m_attackLv2Clip;
+    if (clip) {
+        m_animPlayer.play(clip, false);
         m_isAttacking = true;
-        m_attackTimer = 0.3f;   // 假设攻击动画持续0.3秒，之后自动结束
+        m_attackTimer = 0.5f;
     }
-    // 伤害判定实际应由 GameWidget 在攻击瞬间检测与敌人的碰撞，这里我们稍后实现
 }
 
 void Player::draw(QPainter* painter) const
@@ -110,16 +120,36 @@ void Player::draw(QPainter* painter) const
     QPixmap frame = m_animPlayer.getCurrentFrame();
 
     if (!frame.isNull()) {
-        int x = m_transform.position.x() - 24;
-        int y = m_transform.position.y() - 24;
+        int x = m_transform.position.x() - frame.width() / 2;
+        int y = m_transform.position.y() - frame.height() + 12;
         painter->drawPixmap(x, y, frame);
+
+        float healthPercent = (float)m_health / m_maxHealth;
+        int barWidth = 32;
+        int barHeight = 4;
+        int barX = m_transform.position.x() - barWidth / 2;
+        int barY = m_transform.position.y() - frame.height() + 12 - 8;
+
+        painter->setBrush(QColor(58, 58, 58));
+        painter->drawRect(barX, barY, barWidth, barHeight);
+        painter->setBrush(QColor(126, 140, 132));
+        painter->drawRect(barX, barY, barWidth * healthPercent, barHeight);
+        painter->setPen(QColor(136, 136, 136));
+        painter->drawRect(barX, barY, barWidth, barHeight);
     }
 }
 
 QRectF Player::getCollisionRect() const
 {
-    // 暂时用固定尺寸40x40，可改为从当前帧获取
-    return QRectF(m_transform.position.x() - 20, m_transform.position.y() - 20, 40, 40);
+    QPixmap frame = m_animPlayer.getCurrentFrame();
+    int w = frame.width() > 0 ? frame.width() : 40;
+    int h = frame.height() > 0 ? frame.height() : 40;
+    return QRectF(m_transform.position.x() - w/2, m_transform.position.y() - h, w, h);
+}
+
+QRectF Player::getAttackRange() const
+{
+    return QRectF(m_transform.position.x() - 40, m_transform.position.y() - 48, 80, 48);
 }
 
 void Player::takeDamage(int amount)
