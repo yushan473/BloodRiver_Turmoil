@@ -133,6 +133,14 @@ QRectF Enemy::getCollisionRect() const
     QPixmap frame = m_animPlayer.getCurrentFrame();
     int w = frame.width() > 0 ? frame.width() : 24;
     int h = frame.height() > 0 ? frame.height() : 48;
+    
+    // 慕阴真浮空时，需要向下延伸攻击范围才能打到地面玩家
+    if (m_type == Muyinzhen) {
+        // 向下延伸攻击范围，让慕阴真能够攻击到地面的玩家
+        int attackRange = 120;  // 向下延伸120像素的攻击范围
+        return QRectF(m_transform.position.x() - w/2 - 10, m_transform.position.y() - h, w + 20, h + attackRange);
+    }
+    
     return QRectF(m_transform.position.x() - w/2, m_transform.position.y() - h, w, h);
 }
 
