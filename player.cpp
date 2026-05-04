@@ -5,7 +5,7 @@
 
 Player::Player()
 {
-    m_transform.position = {50, 192};
+    m_transform.position = {100, 396};
     m_skills.emplace_back("防守技能", 0, 5, nullptr);
     m_skills.emplace_back("攻击技能", 0, 10, nullptr);
 }
@@ -44,7 +44,7 @@ void Player::update(float deltaSeconds)
 
     float halfW = 24;
     if (m_transform.position.x() < halfW) m_transform.position.setX(halfW);
-    if (m_transform.position.x() > 256 - halfW) m_transform.position.setX(256 - halfW);
+    if (m_transform.position.x() > 512 - halfW) m_transform.position.setX(512 - halfW);
 
     if (m_jumpPressed && m_isOnGround) {
         m_velocityY = m_jumpForce;
@@ -56,7 +56,7 @@ void Player::update(float deltaSeconds)
         m_velocityY += m_gravity * deltaSeconds;
         m_transform.position.ry() += m_velocityY * deltaSeconds;
 
-        const float groundY = 192.0f;
+        const float groundY = 396.0f;  // 512画布下的地面位置 (原256画布的192 × 2 + 12)
         if (m_transform.position.y() >= groundY) {
             m_transform.position.setY(groundY);
             m_velocityY = 0.0f;
@@ -130,12 +130,11 @@ void Player::draw(QPainter* painter) const
         int barX = m_transform.position.x() - barWidth / 2;
         int barY = m_transform.position.y() - frame.height() + 12 - 8;
 
+        painter->setPen(QColor(136, 136, 136));
         painter->setBrush(QColor(58, 58, 58));
         painter->drawRect(barX, barY, barWidth, barHeight);
         painter->setBrush(QColor(126, 140, 132));
         painter->drawRect(barX, barY, barWidth * healthPercent, barHeight);
-        painter->setPen(QColor(136, 136, 136));
-        painter->drawRect(barX, barY, barWidth, barHeight);
     }
 }
 
@@ -149,7 +148,8 @@ QRectF Player::getCollisionRect() const
 
 QRectF Player::getAttackRange() const
 {
-    return QRectF(m_transform.position.x() - 40, m_transform.position.y() - 48, 80, 48);
+    // 扩大攻击范围，特别是向上的范围，以打到浮空的慕阴真
+    return QRectF(m_transform.position.x() - 50, m_transform.position.y() - 120, 100, 120);
 }
 
 void Player::takeDamage(int amount)

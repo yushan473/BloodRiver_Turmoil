@@ -18,29 +18,6 @@ void NPC::setIdleClip(AnimationClip* clip)
     }
 }
 
-void NPC::startDialog()
-{
-    loadDialog();
-    m_dialogIndex = 0;
-    m_currentDialog = m_dialogLines.value(0, "");
-    m_inDialog = true;
-}
-
-void NPC::nextDialog()
-{
-    if (m_dialogIndex < m_dialogLines.size() - 1) {
-        m_dialogIndex++;
-        m_currentDialog = m_dialogLines.value(m_dialogIndex, "");
-    } else {
-        m_inDialog = false;
-    }
-}
-
-void NPC::endDialog()
-{
-    m_inDialog = false;
-}
-
 bool NPC::isPlayerNearby(const QPointF& playerPos) const
 {
     float dx = playerPos.x() - m_transform.position.x();
@@ -67,16 +44,4 @@ void NPC::draw(QPainter* painter) const
 QRectF NPC::getCollisionRect() const
 {
     return QRectF(m_transform.position.x() - 16, m_transform.position.y() - 48, 32, 48);
-}
-
-void NPC::loadDialog()
-{
-    switch (m_type) {
-    case Suzhi:
-        m_dialogLines << "苏止：你来了...很久没见过活人了。"
-                      << "苏止：血河之乱后，这里就只剩怪物了。"
-                      << "苏止：小心，前面有更危险的东西。"
-                      << "苏止：祝你好运。";
-        break;
-    }
 }

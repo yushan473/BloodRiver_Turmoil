@@ -16,17 +16,20 @@ void Enemy::initEnemyStats(EnemyType type)
     case Xieqianji:
         m_health = 20;
         m_maxHealth = 20;
-        m_speed = 55.0f;
+        m_speed = 40.0f;
+        m_namePixmap.load(":/res/image/name_xieqianji.png");
         break;
     case Muyinzhen:
         m_health = 50;
         m_maxHealth = 50;
-        m_speed = 42.0f;
+        m_speed = 40.0f;
+        m_namePixmap.load(":/res/image/name_muyinzhen.png");
         break;
     case Suze:
-        m_health = 80;
-        m_maxHealth = 80;
-        m_speed = 48.0f;
+        m_health = 100;
+        m_maxHealth = 100;
+        m_speed = 50.0f;
+        m_namePixmap.load(":/res/image/name_suze.png");
         break;
     }
 }
@@ -44,15 +47,24 @@ void Enemy::update(float deltaSeconds, const QPointF& playerPos)
     float dx = playerPos.x() - m_transform.position.x();
     float dist = qSqrt(dx * dx);
 
+    // 敌人主动向玩家移动，不受最小距离限制
+    // 增加随机移动因素，让敌人看起来更主动
     const float minDistance = 30.0f;
-    if (dist > minDistance) {
+    bool shouldMove = dist > minDistance;
+    
+    // 即使玩家不动，敌人也有一定概率主动移动
+    if (!shouldMove && dist > 5.0f && (rand() % 50) == 0) {
+        shouldMove = true;
+    }
+    
+    if (shouldMove) {
         m_directionX = (dx > 0) ? 1 : -1;
         m_transform.position.rx() += m_directionX * m_speed * deltaSeconds;
     }
 
     float margin = 20.0f;
     if (m_transform.position.x() < margin) m_transform.position.setX(margin);
-    if (m_transform.position.x() > 256 - margin) m_transform.position.setX(256 - margin);
+    if (m_transform.position.x() > 512 - margin) m_transform.position.setX(512 - margin);
 
     if (m_type != Muyinzhen) {
         if (m_isOnGround && (rand() % 200) == 0) {
@@ -64,7 +76,7 @@ void Enemy::update(float deltaSeconds, const QPointF& playerPos)
             m_velocityY += m_gravity * deltaSeconds;
             m_transform.position.ry() += m_velocityY * deltaSeconds;
 
-            const float groundY = 192.0f;
+            const float groundY = 396.0f;  // 512画布下的地面位置
             if (m_transform.position.y() >= groundY) {
                 m_transform.position.setY(groundY);
                 m_velocityY = 0.0f;
@@ -101,12 +113,18 @@ void Enemy::draw(QPainter* painter) const
         int barX = m_transform.position.x() - barWidth / 2;
         int barY = m_transform.position.y() - frame.height() / 2 - 8;
 
+        // 绘制名字图片（在血条上方）
+        if (!m_namePixmap.isNull()) {
+            int nameX = m_transform.position.x() - m_namePixmap.width() / 2;
+            int nameY = barY - m_namePixmap.height() - 2;
+            painter->drawPixmap(nameX, nameY, m_namePixmap);
+        }
+
+        painter->setPen(QColor(136, 136, 136));
         painter->setBrush(QColor(58, 58, 58));
         painter->drawRect(barX, barY, barWidth, barHeight);
         painter->setBrush(QColor(126, 140, 132));
         painter->drawRect(barX, barY, barWidth * healthPercent, barHeight);
-        painter->setPen(QColor(136, 136, 136));
-        painter->drawRect(barX, barY, barWidth, barHeight);
     }
 }
 

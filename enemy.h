@@ -5,6 +5,7 @@
 #include "Transform.h"
 #include "AnimationPlayer.h"
 #include "AnimationClip.h"
+#include <QPixmap>
 
 class Enemy :public Entity
 {
@@ -47,6 +48,9 @@ private:
     float m_velocityY = 0.0f;
     static constexpr float m_gravity = 800.0f;
     static constexpr float m_jumpForce = -300.0f;
+
+    // Ãû×ÖÍ¼Æ¬
+    QPixmap m_namePixmap;
 
     void initEnemyStats(EnemyType type);
 };

@@ -9,5 +9,28 @@
         <file>image/enemy_Muyinzhen_attack.png</file>
         <file>image/player_attack_lv1.png</file>
         <file>image/background.png</file>
+        <file>image/help.png</file>
+        <file>image/d1.png</file>
+        <file>image/d2.png</file>
+        <file>image/d3.png</file>
+        <file>image/d4.png</file>
+        <file>image/d5.png</file>
+        <file>image/d6.png</file>
+        <file>image/d7.png</file>
+        <file>image/d8.png</file>
+        <file>image/d9.png</file>
+        <file>image/d10.png</file>
+        <file>image/d11.png</file>
+        <file>image/d12.png</file>
+        <file>image/start.png</file>
+        <file>image/end.png</file>
+        <file>image/success.png</file>
+        <file>image/name_suze.png</file>
+        <file>music/bgm.mp3</file>
+        <file>image/name_muyinzhen.png</file>
+        <file>image/name_suzhi.png</file>
+        <file>image/name_xieqianji.png</file>
+        <file>image/music_off.png</file>
+        <file>image/music_on.png</file>
     </qresource>
 </RCC>
