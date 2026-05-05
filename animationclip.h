@@ -15,10 +15,9 @@ class AnimationClip
 public:
     AnimationClip();
 
-    // 从水平精灵表加载（每帧等宽）
     void loadFromSpriteSheet(const QString& path, int frameCount, int frameDurationMs);
 
-    // 手动添加一帧（用于测试or程序生成）
+    // 手动添加
     void addFrame(const QPixmap& pix, int durationMs);
 
     // 获取所有帧

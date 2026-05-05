@@ -189,9 +189,10 @@ void GameWidget::gameUpdate()
         }
     }
 
-    // 再次检查玩家状态（防止上面的循环中玩家死亡）
     if (!player.isAlive()) {
-        isRunning = false;
+        gameState = PHASE_GAMEOVER;
+        repaint();
+        return;
     }
 
     // 触发界面重绘
@@ -323,16 +324,27 @@ void GameWidget::keyPressEvent(QKeyEvent* event)
     }
 
     if (gameState == PHASE_GAMEOVER) {
-        QApplication::quit();
+        if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
+            gameState = PHASE_START;
+            update();
+            isRunning = true;
+            enemies.clear();
+            player.takeDamage(-100);
+            repaint();
+        }
         return;
     }
 
     if (!isRunning && gameState != PHASE_SUZHI_DIALOG && gameState != PHASE_WIN) return;
 
     if (gameState == PHASE_WIN) {
-        gameState = PHASE_START;
-        isRunning = true;
-        enemies.clear();
+        if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
+            gameState = PHASE_START;
+            isRunning = true;
+            enemies.clear();
+            player.takeDamage(-100);
+            repaint();
+        }
         return;
     }
 

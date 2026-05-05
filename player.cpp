@@ -155,5 +155,6 @@ void Player::takeDamage(int amount)
 {
     health -= amount;
     if (health < 0) health = 0;
+    if (health > maxHealth) health = maxHealth;
     qDebug() << "Player health:" << health;
 }
