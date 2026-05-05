@@ -2,6 +2,8 @@
 #include "animationclip.h"
 #include <QPainter>
 #include <QDebug>
+const float GRAVITY = 700.0f;
+const float JUMP_FORCE = -245.0f;
 
 Player::Player()
 {
@@ -47,13 +49,13 @@ void Player::update(float deltaSeconds)
     if (transform.position.x() > 512 - halfW) transform.position.setX(512 - halfW);
 
     if (jumpPressed && onGround) {
-        velocityY = jumpForce;
+        velocityY = JUMP_FORCE;
         onGround = false;
         jumpPressed = false;
     }
 
     if (!onGround) {
-        velocityY += gravity * deltaSeconds;
+        velocityY += GRAVITY * deltaSeconds;
         transform.position.ry() += velocityY * deltaSeconds;
 
         const float groundY = 396.0f;

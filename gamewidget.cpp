@@ -118,8 +118,8 @@ void GameWidget::gameUpdate()
     // 如果游戏未运行或暂停，直接返回
     if (!isRunning || isStopped) return;
     
-    // 如果在开始界面或帮助界面，不更新游戏逻辑
-    if (gameState == PHASE_START || gameState == PHASE_HELP) return;
+    // 如果在开始界面或帮助界面或游戏结束界面，不更新游戏逻辑
+    if (gameState == PHASE_START || gameState == PHASE_HELP || gameState == PHASE_GAMEOVER) return;
 
     // ========== 更新玩家状态 ==========
     player.update(deltaSec);
@@ -159,8 +159,8 @@ void GameWidget::gameUpdate()
     // ========== 检查玩家死亡 ==========
     if (!player.isAlive()) {
         gameState = PHASE_GAMEOVER;
-        isStopped = true;
-        return;
+        isRunning = false;
+        enemies.clear();
     }
 
     // ========== 检查敌人死亡，推进剧情 ==========
@@ -187,12 +187,6 @@ void GameWidget::gameUpdate()
                 isRunning = false;
             }
         }
-    }
-
-    if (!player.isAlive()) {
-        gameState = PHASE_GAMEOVER;
-        repaint();
-        return;
     }
 
     // 触发界面重绘
@@ -307,6 +301,7 @@ void GameWidget::keyPressEvent(QKeyEvent* event)
             Enemy xieqianji(QPointF(400, 396), ENEMY_XIEQIANJI);
             xieqianji.setAttackClip(&xieqianjiClip);
             enemies.append(xieqianji);
+            isRunning = true;
             update();
         } else if (event->key() == Qt::Key_H) {
             gameState = PHASE_HELP;
@@ -326,10 +321,12 @@ void GameWidget::keyPressEvent(QKeyEvent* event)
     if (gameState == PHASE_GAMEOVER) {
         if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
             gameState = PHASE_START;
-            update();
-            isRunning = true;
+            isRunning = false;
             enemies.clear();
             player.takeDamage(-100);
+            xieqianjiDefeated = false;
+            muyinzhenDefeated = false;
+            suzeDefeated = false;
             repaint();
         }
         return;
@@ -340,9 +337,12 @@ void GameWidget::keyPressEvent(QKeyEvent* event)
     if (gameState == PHASE_WIN) {
         if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
             gameState = PHASE_START;
-            isRunning = true;
+            isRunning = false;
             enemies.clear();
             player.takeDamage(-100);
+            xieqianjiDefeated = false;
+            muyinzhenDefeated = false;
+            suzeDefeated = false;
             repaint();
         }
         return;

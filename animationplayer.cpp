@@ -51,13 +51,7 @@ QPixmap AnimationPlayer::getCurrentFrame() const
 {
     if (!clip || clip->frames().empty())
         return QPixmap();
-
-    const auto& frames = clip->frames();
-    int frameCount = frames.size();
-
-    int safeFrame = currentFrame % frameCount;
-
-    return frames[safeFrame].image;
+    return clip->frames()[currentFrame].image;
 }
 
 bool AnimationPlayer::isFinished() const

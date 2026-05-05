@@ -50,8 +50,6 @@ private:
 
     bool onGround = true;
     float velocityY = 0.0f;
-    static constexpr float gravity = 700.0f;
-    static constexpr float jumpForce = -245.0f;
 
     AnimationClip* idleClip = nullptr;
     AnimationClip* walkClip = nullptr;

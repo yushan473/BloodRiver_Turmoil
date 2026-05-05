@@ -26,8 +26,6 @@ public:
 
 private:
     std::vector<Frame> framesList;
-
-
 };
 
 #endif // ANIMATIONCLIP_H

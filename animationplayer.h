@@ -7,11 +7,9 @@ class AnimationPlayer
 {
 public:
     AnimationPlayer();
-
-    // 播放指定的剪辑，loop是否循环
     void play(const AnimationClip* clip, bool loop = false);
     void stop();
-    void update(float deltaSeconds);   // 每帧调用
+    void update(float deltaSeconds);
     QPixmap getCurrentFrame() const;
     bool isPlaying() const { return playing; }
     bool isFinished() const;
