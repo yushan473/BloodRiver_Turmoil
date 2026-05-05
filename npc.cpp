@@ -3,45 +3,45 @@
 #include <QPainter>
 #include <QtMath>
 
-NPC::NPC(const QPointF& pos, NPCType type)
-    : m_type(type)
+NPC::NPC(const QPointF& pos, int t)
+    : type(t)
 {
-    m_transform.position = pos;
+    transform.position = pos;
 }
 
 void NPC::setIdleClip(AnimationClip* clip)
 {
-    m_idleClip = clip;
-    if (m_idleClip) {
-        m_idleClip->loadFromSpriteSheet(":/res/image/npc_Suzhi_idle.png", 3, 100);
-        m_animPlayer.play(m_idleClip, true);
+    idleClip = clip;
+    if (idleClip) {
+        idleClip->loadFromSpriteSheet(":/res/image/npc_Suzhi_idle.png", 3, 100);
+        animPlayer.play(idleClip, true);
     }
 }
 
 bool NPC::isPlayerNearby(const QPointF& playerPos) const
 {
-    float dx = playerPos.x() - m_transform.position.x();
-    float dy = playerPos.y() - m_transform.position.y();
+    float dx = playerPos.x() - transform.position.x();
+    float dy = playerPos.y() - transform.position.y();
     return (dx * dx + dy * dy) < 900;
 }
 
 void NPC::update(float deltaSeconds)
 {
     Q_UNUSED(deltaSeconds);
-    m_animPlayer.update(deltaSeconds);
+    animPlayer.update(deltaSeconds);
 }
 
 void NPC::draw(QPainter* painter) const
 {
-    QPixmap frame = m_animPlayer.getCurrentFrame();
+    QPixmap frame = animPlayer.getCurrentFrame();
     if (!frame.isNull()) {
-        int x = m_transform.position.x() - frame.width() / 2;
-        int y = m_transform.position.y() - frame.height();
+        int x = transform.position.x() - frame.width() / 2;
+        int y = transform.position.y() - frame.height();
         painter->drawPixmap(x, y, frame);
     }
 }
 
 QRectF NPC::getCollisionRect() const
 {
-    return QRectF(m_transform.position.x() - 16, m_transform.position.y() - 48, 32, 48);
+    return QRectF(transform.position.x() - 16, transform.position.y() - 48, 32, 48);
 }

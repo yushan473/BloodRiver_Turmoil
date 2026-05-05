@@ -13,16 +13,16 @@ public:
     void stop();
     void update(float deltaSeconds);   // 每帧调用
     QPixmap getCurrentFrame() const;
-    bool isPlaying() const { return m_playing; }
-    bool isFinished() const;   // 非循环动画是否播放完毕
-    const AnimationClip* getCurrentClip() const { return m_clip; }
+    bool isPlaying() const { return playing; }
+    bool isFinished() const;
+    const AnimationClip* getCurrentClip() const { return clip; }
 
 private:
-    const AnimationClip* m_clip = nullptr;
-    int m_currentFrame = 0;
-    float m_accumulatorMs = 0.0f;
-    bool m_playing = false;
-    bool m_loop = false;
+    const AnimationClip* clip = nullptr;
+    int currentFrame = 0;
+    float accumulatorMs = 0.0f;
+    bool playing = false;
+    bool loop = false;
 };
 
 #endif // ANIMATIONPLAYER_H

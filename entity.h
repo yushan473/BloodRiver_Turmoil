@@ -9,18 +9,17 @@ class Entity
 public:
     virtual ~Entity() = default;
 
-    // çº¯è™šå‡½æ•°ï¼šæ‰€æœ‰å®žä½“å¿…é¡»å®žçŽ°
+    // ´¿Ðéº¯Êý£ºËùÓÐÊµÌå±ØÐëÊµÏÖ
     virtual void update(float deltaSeconds) = 0;
     virtual void draw(QPainter* painter) const = 0;
     virtual QRectF getCollisionRect() const = 0;
 
-    // å¯é€‰ï¼šé€šç”¨å±žæ€§ï¼ˆå­ç±»å¯è¦†ç›–ï¼‰
-    virtual bool isAlive() const { return m_health > 0; }
-    virtual void takeDamage(int amount) { m_health -= amount; }
-    virtual int getHealth() const { return m_health; }
+    virtual bool isAlive() const { return health > 0; }
+    virtual void takeDamage(int amount) { health -= amount; }
+    virtual int getHealth() const { return health; }
 
 protected:
-    int m_health = 0;
+    int health = 0;
 };
 
 #endif // ENTITY_H

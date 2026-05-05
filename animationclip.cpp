@@ -4,7 +4,7 @@ AnimationClip::AnimationClip() {}
 
 void AnimationClip::loadFromSpriteSheet(const QString& path, int frameCount, int frameDurationMs)
 {
-    m_frames.clear();
+    framesList.clear();
     QPixmap sheet(path);
     if (sheet.isNull()) return;
     int frameWidth = sheet.width() / frameCount;
@@ -17,5 +17,5 @@ void AnimationClip::loadFromSpriteSheet(const QString& path, int frameCount, int
 
 void AnimationClip::addFrame(const QPixmap& pix, int durationMs)
 {
-    m_frames.push_back({pix, durationMs});
+    framesList.push_back({pix, durationMs});
 }

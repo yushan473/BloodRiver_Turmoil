@@ -7,16 +7,17 @@
 #include "AnimationClip.h"
 #include <QPixmap>
 
+enum {
+    ENEMY_XIEQIANJI,
+    ENEMY_MUYINZHEN,
+    ENEMY_SUZE
+};
+
 class Enemy :public Entity
 {
 public:
-    enum EnemyType {
-        Xieqianji,
-        Muyinzhen,
-        Suze
-    };
 
-    Enemy(const QPointF& pos, EnemyType type = Xieqianji);
+    Enemy(const QPointF& pos, int type = ENEMY_XIEQIANJI);
     void setAttackClip(AnimationClip* clip);
 
     void update(float deltaSeconds, const QPointF& playerPos);
@@ -25,34 +26,32 @@ public:
 
     QRectF getCollisionRect() const override;
     void takeDamage(int damage)override;
-    bool isAlive() const override { return m_health > 0; }
+    bool isAlive() const override { return health > 0; }
 
-    int getMaxHealth() const { return m_maxHealth; }
-    EnemyType getType() const { return m_type; }
+    int getMaxHealth() const { return maxHealth; }
+    int getType() const { return type; }
 
 private:
-    Transform m_transform;
-    AnimationPlayer m_animPlayer;
-    AnimationClip* m_attackClip = nullptr;
-    EnemyType m_type;
-    int m_health = 30;
-    int m_maxHealth = 30;
-    float m_speed = 30.0f;
-    int m_directionX = 1;
-    int m_directionY = 1;
-    float m_lastPlayerX = 0.0f;
-    float m_lastPlayerY = 0.0f;
+    Transform transform;
+    AnimationPlayer animPlayer;
+    AnimationClip* attackClip = nullptr;
+    int type;
+    int health = 30;
+    int maxHealth = 30;
+    float speed = 30.0f;
+    int directionX = 1;
+    int directionY = 1;
+    float lastPlayerX = 0.0f;
+    float lastPlayerY = 0.0f;
 
-    // ÌøÔ¾ÎïÀí
-    bool m_isOnGround = true;
-    float m_velocityY = 0.0f;
-    static constexpr float m_gravity = 800.0f;
-    static constexpr float m_jumpForce = -300.0f;
+    bool isOnGround = true;
+    float velocityY = 0.0f;
+    static constexpr float gravity = 800.0f;
+    static constexpr float jumpForce = -300.0f;
 
-    // Ãû×ÖÍ¼Æ¬
-    QPixmap m_namePixmap;
+    QPixmap namePixmap;
 
-    void initEnemyStats(EnemyType type);
+    void initEnemyStats(int type);
 };
 
 #endif // ENEMY_H

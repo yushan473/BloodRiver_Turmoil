@@ -1,6 +1,3 @@
-// ============================================================================
-// 游戏主窗口类 - 负责整个游戏的逻辑和渲染
-// ============================================================================
 #include "GameWidget.h"
 #include "Player.h"
 #include "Enemy.h"
@@ -15,12 +12,6 @@
 #include <QDebug>
 #include <QRandomGenerator>
 
-// 全局静态指针，方便其他类访问游戏实例
-GameWidget* GameWidget::widget = nullptr;
-
-// ----------------------------------------------------------------------------
-// 构造函数 - 初始化游戏窗口和所有资源
-// ----------------------------------------------------------------------------
 GameWidget::GameWidget(QWidget *parent)
     : QWidget(parent)
 {
@@ -35,36 +26,25 @@ GameWidget::GameWidget(QWidget *parent)
     startTimer();
     
     // 保存全局指针
-    widget = this;
+    //widget = this;
 
     // 加载游戏资源
     loadBackground();
     loadAnimations();
 
     // 设置玩家动画剪辑
-    m_player.setClips(&m_idleClip, &m_walkClip, &m_attackLv1Clip, &m_attackLv2Clip);
+    player.setClips(&idleClip, &walkClip, &attackLv1Clip, &attackLv2Clip);
 
-    // ==================== 背景音乐初始化 ====================
-    // 创建播放器实例（全局唯一，游戏期间只创建一次）
-    m_bgMusic = new QMediaPlayer(this);
-    m_audioOutput = new QAudioOutput(this);
-    m_bgMusic->setAudioOutput(m_audioOutput);
-    
-    // 设置音乐文件路径
-    m_bgMusic->setSource(QUrl("qrc:/res/music/bgm.mp3"));
-    
-    // 设置无限循环播放（全程不中断）
-    m_bgMusic->setLoops(QMediaPlayer::Infinite);
-    
-    // 设置初始音量（50%）
-    m_audioOutput->setVolume(0.5);
-    
-    // 开始播放（只调用一次，之后不再重复调用）
-    m_bgMusic->play();
+    bgMusic = new QMediaPlayer(this);
+    audioOutput = new QAudioOutput(this);
+    bgMusic->setAudioOutput(audioOutput);
+    bgMusic->setSource(QUrl("qrc:/res/music/bgm.mp3"));
+    bgMusic->setLoops(QMediaPlayer::Infinite);
+    audioOutput->setVolume(0.5);
+    bgMusic->play();
 
-    // 加载音乐开关按钮的图标
-    m_musicOnImage.load(":/res/image/music_on.png");
-    m_musicOffImage.load(":/res/image/music_off.png");
+    musicOnImage.load(":/res/image/music_on.png");
+    musicOffImage.load(":/res/image/music_off.png");
 
     // 优化渲染性能
     setAttribute(Qt::WA_NoSystemBackground, true);
@@ -76,9 +56,9 @@ GameWidget::GameWidget(QWidget *parent)
 // ----------------------------------------------------------------------------
 GameWidget::~GameWidget()
 {
-    delete m_npc;           // 释放 NPC 对象
-    delete m_bgMusic;       // 释放音乐播放器
-    delete m_audioOutput;   // 释放音频输出
+    delete npc;
+    delete bgMusic;
+    delete audioOutput;
 }
 
 // ----------------------------------------------------------------------------
@@ -86,7 +66,7 @@ GameWidget::~GameWidget()
 // ----------------------------------------------------------------------------
 void GameWidget::loadBackground()
 {
-    m_background.load(":/res/image/background.png");
+    background.load(":/res/image/background.png");
 }
 
 // ----------------------------------------------------------------------------
@@ -95,32 +75,30 @@ void GameWidget::loadBackground()
 void GameWidget::loadAnimations()
 {
     // ========== 玩家动画 ==========
-    m_idleClip.loadFromSpriteSheet(":/res/image/p_idle.png", 3, 150);      // 待机动画（3帧，每帧150ms）
-    m_walkClip.loadFromSpriteSheet(":/res/image/player_walk01.png", 8, 100); // 行走动画（8帧，每帧100ms）
-    m_attackLv1Clip.loadFromSpriteSheet(":/res/image/player_attack_lv1.png", 14, 70); // 轻攻击（14帧，每帧70ms）
-    m_attackLv2Clip.loadFromSpriteSheet(":/res/image/player_attack_lv2.png", 13, 77); // 重攻击（13帧，每帧77ms）
+    idleClip.loadFromSpriteSheet(":/res/image/p_idle.png", 3, 150);      // 待机动画（3帧，每帧150ms）
+    walkClip.loadFromSpriteSheet(":/res/image/player_walk01.png", 8, 100); // 行走动画（8帧，每帧100ms）
+    attackLv1Clip.loadFromSpriteSheet(":/res/image/player_attack_lv1.png", 14, 70); // 轻攻击（14帧，每帧70ms）
+    attackLv2Clip.loadFromSpriteSheet(":/res/image/player_attack_lv2.png", 13, 77); // 重攻击（13帧，每帧77ms）
 
     // ========== 敌人动画 ==========
-    m_xieqianjiClip.loadFromSpriteSheet(":/res/image/enemy_Xieqianji_attack.png", 5, 100); // 谢千机
-    m_muyinzhenClip.loadFromSpriteSheet(":/res/image/enemy_Muyinzhen_attack.png", 5, 100); // 慕阴真
-    m_suzeClip.loadFromSpriteSheet(":/res/image/enemy_Suze_attack.png", 5, 100);         // 苏泽
+    xieqianjiClip.loadFromSpriteSheet(":/res/image/enemy_Xieqianji_attack.png", 5, 100); // 谢千机
+    muyinzhenClip.loadFromSpriteSheet(":/res/image/enemy_Muyinzhen_attack.png", 5, 100); // 慕阴真
+    suzeClip.loadFromSpriteSheet(":/res/image/enemy_Suze_attack.png", 5, 100);         // 苏泽
 
     // ========== NPC动画 ==========
-    m_npcSuzhiClip.loadFromSpriteSheet(":/res/image/npc_Suzhi_idle.png", 3, 100); // 苏止待机
+    npcSuzhiClip.loadFromSpriteSheet(":/res/image/npc_Suzhi_idle.png", 3, 100); // 苏止待机
     
-    // ========== UI界面图片 ==========
-    m_startImage.load(":/res/image/start.png");     // 开始界面
-    m_helpImage.load(":/res/image/help.png");       // 帮助界面
-    m_endImage.load(":/res/image/end.png");         // 游戏结束界面
-    m_successImage.load(":/res/image/success.png"); // 通关成功界面
+    startImage.load(":/res/image/start.png");
+    helpImage.load(":/res/image/help.png");
+    endImage.load(":/res/image/end.png");
+    successImage.load(":/res/image/success.png");
     
-    // ========== 对话图片（共12张）==========
-    m_dialogImages.clear();
+    dialogImages.clear();
     for (int i = 1; i <= 12; ++i) {
         QString path = QString(":/res/image/d%1.png").arg(i);
         QPixmap dialogImage;
         dialogImage.load(path);
-        m_dialogImages.append(dialogImage);
+        dialogImages.append(dialogImage);
     }
 }
 
@@ -141,85 +119,78 @@ void GameWidget::gameUpdate()
     if (!isRunning || isStopped) return;
     
     // 如果在开始界面或帮助界面，不更新游戏逻辑
-    if (m_currentPhase == Phase_Start || m_currentPhase == Phase_Help) return;
+    if (gameState == PHASE_START || gameState == PHASE_HELP) return;
 
     // ========== 更新玩家状态 ==========
-    m_player.update(deltaSec);
+    player.update(deltaSec);
 
     // ========== 更新敌人状态 ==========
-    for (auto& enemy : m_enemies) {
-        enemy.update(deltaSec, m_player.getCollisionRect().center());
+    for (auto& enemy : enemies) {
+        enemy.update(deltaSec, player.getCollisionRect().center());
     }
 
     // ========== 更新NPC状态 ==========
-    if (m_npc) {
-        m_npc->update(deltaSec);
+    if (npc) {
+        npc->update(deltaSec);
         
         // 检查玩家是否靠近NPC，如果是则触发对话
-        if (!m_showDialog && m_npc->isPlayerNearby(m_player.getCollisionRect().center())) {
-            m_showDialog = true;
-            m_currentDialogIndex = 0;
+        if (!showDialog && npc->isPlayerNearby(player.getCollisionRect().center())) {
+            showDialog = true;
+            currentDialogIndex = 0;
             // 注意：这里不能设置isStopped=true，否则玩家无法移动靠近NPC
         }
     }
 
     // ========== 玩家受伤检测 ==========
     qint64 currentTime = QDateTime::currentMSecsSinceEpoch();
-    for (const auto& enemy : m_enemies) {
+    for (const auto& enemy : enemies) {
         // 如果玩家和敌人碰撞
-        if (enemy.getCollisionRect().intersects(m_player.getCollisionRect())) {
-            // 检查是否在冷却时间内（1秒内不会再次受伤）
-            if (!m_isPlayerInvincible && (currentTime - m_lastDamageTime) > m_damageCooldownMs) {
-                m_player.takeDamage(5);           // 玩家受到5点伤害
-                m_lastDamageTime = currentTime;   // 记录受伤时间
-                m_isPlayerInvincible = true;      // 设置无敌状态
-                
-                // 500ms后取消无敌
-                QTimer::singleShot(500, this, [this]() { m_isPlayerInvincible = false; });
+        if (enemy.getCollisionRect().intersects(player.getCollisionRect())) {
+            if (!isPlayerInvincible && (currentTime - lastDamageTime) > damageCooldownMs) {
+                player.takeDamage(5);
+                lastDamageTime = currentTime;
+                isPlayerInvincible = true;
+                QTimer::singleShot(500, this, [this]() { isPlayerInvincible = false; });
             }
             break;  // 只处理第一个碰撞的敌人
         }
     }
 
     // ========== 检查玩家死亡 ==========
-    if (!m_player.isAlive()) {
-        m_currentPhase = Phase_GameOver;  // 切换到游戏结束界面
+    if (!player.isAlive()) {
+        gameState = PHASE_GAMEOVER;
         isStopped = true;
         return;
     }
 
     // ========== 检查敌人死亡，推进剧情 ==========
     // 从后往前遍历，方便删除元素
-    for (int i = m_enemies.size()-1; i >= 0; --i) {
-        if (!m_enemies[i].isAlive()) {
-            Enemy::EnemyType type = m_enemies[i].getType();
-            m_enemies.removeAt(i);  // 移除死亡的敌人
+    for (int i = enemies.size()-1; i >= 0; --i) {
+        if (!enemies[i].isAlive()) {
+            int type = enemies[i].getType();
+            enemies.removeAt(i);
 
-            // 根据击败的敌人类型，推进到下一个阶段
-            if (type == Enemy::Xieqianji && !m_xieqianjiDefeated) {
-                // 击败谢千机后，进入NPC对话阶段
-                m_xieqianjiDefeated = true;
-                m_currentPhase = Phase_Suzhi_Dialog;
-                m_npc = new NPC(QPointF(360, 396), NPC::Suzhi);
-                m_npc->setIdleClip(&m_npcSuzhiClip);
-            } else if (type == Enemy::Muyinzhen && !m_muyinzhenDefeated) {
-                // 击败慕阴真后，进入苏泽战斗阶段
-                m_muyinzhenDefeated = true;
-                m_currentPhase = Phase_Suze;
-                Enemy suze(QPointF(400, 396), Enemy::Suze);
-                suze.setAttackClip(&m_suzeClip);
-                m_enemies.append(suze);
-            } else if (type == Enemy::Suze && !m_suzeDefeated) {
-                // 击败苏泽后，通关成功
-                m_suzeDefeated = true;
-                m_currentPhase = Phase_Complete;
+            if (type == ENEMY_XIEQIANJI && !xieqianjiDefeated) {
+                xieqianjiDefeated = true;
+                gameState = PHASE_SUZHI_DIALOG;
+                npc = new NPC(QPointF(360, 396), NPC_SUZHI);
+                npc->setIdleClip(&npcSuzhiClip);
+            } else if (type == ENEMY_MUYINZHEN && !muyinzhenDefeated) {
+                muyinzhenDefeated = true;
+                gameState = PHASE_SUZE;
+                Enemy suze(QPointF(400, 396), ENEMY_SUZE);
+                suze.setAttackClip(&suzeClip);
+                enemies.append(suze);
+            } else if (type == ENEMY_SUZE && !suzeDefeated) {
+                suzeDefeated = true;
+                gameState = PHASE_WIN;
                 isRunning = false;
             }
         }
     }
 
     // 再次检查玩家状态（防止上面的循环中玩家死亡）
-    if (!m_player.isAlive()) {
+    if (!player.isAlive()) {
         isRunning = false;
     }
 
@@ -239,9 +210,9 @@ void GameWidget::paintEvent(QPaintEvent* event)
     QPainter bufferPainter(&buffer);
 
     // ========== 绘制背景 ==========
-    if (!m_background.isNull()) {
+    if (!background.isNull()) {
         // 绘制游戏背景图，缩放到512x512
-        bufferPainter.drawPixmap(0, 0, m_background.scaled(512, 512, Qt::IgnoreAspectRatio, Qt::FastTransformation));
+        bufferPainter.drawPixmap(0, 0, background.scaled(512, 512, Qt::IgnoreAspectRatio, Qt::FastTransformation));
     } else {
         // 如果背景图加载失败，填充深灰色
         bufferPainter.fillRect(buffer.rect(), QColor(40, 40, 40));
@@ -250,66 +221,52 @@ void GameWidget::paintEvent(QPaintEvent* event)
     // 关闭平滑缩放，保持像素风格
     bufferPainter.setRenderHint(QPainter::SmoothPixmapTransform, false);
 
-    // ========== 根据游戏阶段绘制不同内容 ==========
-    if (m_currentPhase == Phase_Start) {
-        // 开始界面
-        if (!m_startImage.isNull()) {
-            bufferPainter.drawPixmap(0, 0, m_startImage);
+    if (gameState == PHASE_START) {
+        if (!startImage.isNull()) {
+            bufferPainter.drawPixmap(0, 0, startImage);
         }
-    } else if (m_currentPhase == Phase_Help) {
-        // 帮助界面
-        if (!m_helpImage.isNull()) {
-            bufferPainter.drawPixmap(0, 0, m_helpImage);
+    } else if (gameState == PHASE_HELP) {
+        if (!helpImage.isNull()) {
+            bufferPainter.drawPixmap(0, 0, helpImage);
         }
-    } else if (m_currentPhase == Phase_GameOver) {
-        // 游戏结束界面
-        if (!m_endImage.isNull()) {
-            bufferPainter.drawPixmap(0, 0, m_endImage);
+    } else if (gameState == PHASE_GAMEOVER) {
+        if (!endImage.isNull()) {
+            bufferPainter.drawPixmap(0, 0, endImage);
         }
     } else {
-        // 游戏进行中
-        // 绘制玩家
-        m_player.draw(&bufferPainter);
+        player.draw(&bufferPainter);
 
-        // 绘制所有敌人
-        for (const auto& enemy : m_enemies) {
+        for (const auto& enemy : enemies) {
             enemy.draw(&bufferPainter);
         }
 
-        // 绘制NPC（如果存在）
-        if (m_npc) {
-            m_npc->draw(&bufferPainter);
+        if (npc) {
+            npc->draw(&bufferPainter);
         }
 
-        // 绘制对话图片（如果正在显示对话）
-        if (m_showDialog && m_currentDialogIndex < m_dialogImages.size()) {
-            // 对话图片尺寸是 512x192，垂直居中显示
+        if (showDialog && currentDialogIndex < dialogImages.size()) {
             int dialogY = (512 - 192) / 2;
-            bufferPainter.drawPixmap(0, dialogY, m_dialogImages[m_currentDialogIndex]);
+            bufferPainter.drawPixmap(0, dialogY, dialogImages[currentDialogIndex]);
         }
 
-        // 绘制通关成功界面
-        if (m_currentPhase == Phase_Complete) {
-            if (!m_successImage.isNull()) {
-                bufferPainter.drawPixmap(0, 0, m_successImage);
+        if (gameState == PHASE_WIN) {
+            if (!successImage.isNull()) {
+                bufferPainter.drawPixmap(0, 0, successImage);
             }
         }
     }
 
-    // ========== 绘制音乐开关按钮（右上角）==========
-    int btnX = 512 - 32;  // 右边距8像素
-    int btnY = 8;         // 上边距8像素
-    QPixmap btnImage = m_musicEnabled ? m_musicOnImage : m_musicOffImage;
+    int btnX = 512 - 32;
+    int btnY = 8;
+    QPixmap btnImage = musicEnabled ? musicOnImage : musicOffImage;
     
     if (!btnImage.isNull()) {
-        // 如果有按钮图片，绘制图片
         bufferPainter.drawPixmap(btnX, btnY, btnImage.scaled(24, 24, Qt::KeepAspectRatio));
     } else {
-        // 如果没有图片，绘制简单的莫兰迪风格按钮
-        bufferPainter.setBrush(m_musicEnabled ? QColor(126, 140, 132) : QColor(80, 80, 80));
+        bufferPainter.setBrush(musicEnabled ? QColor(126, 140, 132) : QColor(80, 80, 80));
         bufferPainter.drawRect(btnX, btnY, 24, 24);
         bufferPainter.setPen(Qt::white);
-        bufferPainter.drawText(btnX + 6, btnY + 18, m_musicEnabled ? "?" : "?");
+        bufferPainter.drawText(btnX + 6, btnY + 18, musicEnabled ? "?" : "?");
     }
 
     // 将缓冲内容绘制到屏幕
@@ -323,23 +280,17 @@ void GameWidget::paintEvent(QPaintEvent* event)
 // ----------------------------------------------------------------------------
 void GameWidget::mousePressEvent(QMouseEvent* event)
 {
-    // 检查是否点击了音乐开关按钮（右上角 24x24 的区域）
     int btnX = 512 - 32;
     int btnY = 8;
     if (event->pos().x() >= btnX && event->pos().x() <= btnX + 24 &&
         event->pos().y() >= btnY && event->pos().y() <= btnY + 24) {
-        
-        // 切换音乐开关状态
-        m_musicEnabled = !m_musicEnabled;
-        
-        // 使用音量控制代替停止/播放，确保背景音乐全程不中断循环播放
-        if (m_musicEnabled) {
-            m_audioOutput->setVolume(0.5);  // 恢复音量到50%
+        musicEnabled = !musicEnabled;
+        if (musicEnabled) {
+            audioOutput->setVolume(0.5);
         } else {
-            m_audioOutput->setVolume(0.0);   // 静音
+            audioOutput->setVolume(0.0);
         }
-        
-        update();  // 更新画面显示
+        update();
         return;
     }
 }
@@ -349,74 +300,56 @@ void GameWidget::mousePressEvent(QMouseEvent* event)
 // ----------------------------------------------------------------------------
 void GameWidget::keyPressEvent(QKeyEvent* event)
 {
-    // ========== 开始界面 ==========
-    if (m_currentPhase == Phase_Start) {
+    if (gameState == PHASE_START) {
         if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
-            // 按回车键开始游戏，进入第一个BOSS战（谢千机）
-            m_currentPhase = Phase_Xieqianji;
-            Enemy xieqianji(QPointF(400, 396), Enemy::Xieqianji);
-            xieqianji.setAttackClip(&m_xieqianjiClip);
-            m_enemies.append(xieqianji);
+            gameState = PHASE_XIEQIANJI;
+            Enemy xieqianji(QPointF(400, 396), ENEMY_XIEQIANJI);
+            xieqianji.setAttackClip(&xieqianjiClip);
+            enemies.append(xieqianji);
             update();
         } else if (event->key() == Qt::Key_H) {
-            // 按H键进入帮助界面
-            m_currentPhase = Phase_Help;
+            gameState = PHASE_HELP;
             update();
         }
         return;
     }
 
-    // ========== 帮助界面 ==========
-    if (m_currentPhase == Phase_Help) {
+    if (gameState == PHASE_HELP) {
         if (event->key() == Qt::Key_Escape) {
-            // 按ESC键返回开始界面
-            m_currentPhase = Phase_Start;
+            gameState = PHASE_START;
             update();
         }
         return;
     }
 
-    // ========== 游戏结束界面 ==========
-    if (m_currentPhase == Phase_GameOver) {
-        // 按任意键退出游戏
+    if (gameState == PHASE_GAMEOVER) {
         QApplication::quit();
         return;
     }
 
-    // 如果游戏未运行，且不在对话或通关阶段，直接返回
-    if (!isRunning && m_currentPhase != Phase_Suzhi_Dialog && m_currentPhase != Phase_Complete) return;
+    if (!isRunning && gameState != PHASE_SUZHI_DIALOG && gameState != PHASE_WIN) return;
 
-    // ========== 通关成功界面 ==========
-    if (m_currentPhase == Phase_Complete) {
-        // 按任意键返回开始界面
-        m_currentPhase = Phase_Start;
+    if (gameState == PHASE_WIN) {
+        gameState = PHASE_START;
         isRunning = true;
-        m_enemies.clear();  // 清空敌人列表
+        enemies.clear();
         return;
     }
 
-    // ========== 对话阶段 ==========
-    if (m_showDialog) {
-        // 按空格或回车键切换对话
+    if (showDialog) {
         if (event->key() == Qt::Key_Space || event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
-            m_currentDialogIndex++;
-            
-            // 如果对话全部显示完毕
-            if (m_currentDialogIndex >= m_dialogImages.size()) {
-                m_showDialog = false;
-                m_currentDialogIndex = 0;
-                
-                // 删除NPC
-                if (m_npc) {
-                    delete m_npc;
-                    m_npc = nullptr;
+            currentDialogIndex++;
+            if (currentDialogIndex >= dialogImages.size()) {
+                showDialog = false;
+                currentDialogIndex = 0;
+                if (npc) {
+                    delete npc;
+                    npc = nullptr;
                 }
-                
-                // 进入慕阴真战斗阶段
-                m_currentPhase = Phase_Muyinzhen;
-                Enemy muyinzhen(QPointF(400, 290), Enemy::Muyinzhen);
-                muyinzhen.setAttackClip(&m_muyinzhenClip);
-                m_enemies.append(muyinzhen);
+                gameState = PHASE_MUYINZHEN;
+                Enemy muyinzhen(QPointF(400, 290), ENEMY_MUYINZHEN);
+                muyinzhen.setAttackClip(&muyinzhenClip);
+                enemies.append(muyinzhen);
                 isStopped = false;
             }
         }
@@ -428,27 +361,25 @@ void GameWidget::keyPressEvent(QKeyEvent* event)
     case Qt::Key_A:
     case Qt::Key_Left:
         // 向左移动
-        m_player.setMoveLeft(true);
+        player.setMoveLeft(true);
         break;
     case Qt::Key_D:
     case Qt::Key_Right:
         // 向右移动
-        m_player.setMoveRight(true);
+        player.setMoveRight(true);
         break;
     case Qt::Key_W:
     case Qt::Key_Up:
         // 跳跃
-        m_player.setJump(true);
+        player.setJump(true);
         break;
     case Qt::Key_J:
-        // J键：防守技能（轻攻击，伤害5）
-        m_player.attack(0);
-        checkAttackHit(m_defenseDamage);
+        player.attack(0);
+        checkHit(defenseDamage);
         break;
     case Qt::Key_K:
-        // K键：攻击技能（重攻击，伤害10）
-        m_player.attack(1);
-        checkAttackHit(m_attackDamage);
+        player.attack(1);
+        checkHit(attackDamage);
         break;
     case Qt::Key_P:
         // P键：暂停/继续游戏
@@ -466,17 +397,17 @@ void GameWidget::keyReleaseEvent(QKeyEvent* event)
     case Qt::Key_A:
     case Qt::Key_Left:
         // 松开左移键
-        m_player.setMoveLeft(false);
+        player.setMoveLeft(false);
         break;
     case Qt::Key_D:
     case Qt::Key_Right:
         // 松开右移键
-        m_player.setMoveRight(false);
+        player.setMoveRight(false);
         break;
     case Qt::Key_W:
     case Qt::Key_Up:
         // 松开跳跃键
-        m_player.setJump(false);
+        player.setJump(false);
         break;
     }
 }
@@ -484,16 +415,16 @@ void GameWidget::keyReleaseEvent(QKeyEvent* event)
 // ----------------------------------------------------------------------------
 // 检查攻击是否命中敌人
 // ----------------------------------------------------------------------------
-void GameWidget::checkAttackHit(int damage)
+void GameWidget::checkHit(int damage)
 {
     // 获取玩家的攻击范围
-    QRectF attackRange = m_player.getAttackRange();
+    QRectF attackRange = player.getAttackRange();
     
     // 遍历所有敌人，检查是否在攻击范围内
-    for (int i = 0; i < m_enemies.size(); ++i) {
-        if (attackRange.intersects(m_enemies[i].getCollisionRect())) {
+    for (int i = 0; i < enemies.size(); ++i) {
+        if (attackRange.intersects(enemies[i].getCollisionRect())) {
             // 如果命中，敌人受到伤害
-            m_enemies[i].takeDamage(damage);
+            enemies[i].takeDamage(damage);
             break;  // 只攻击第一个命中的敌人
         }
     }
@@ -513,10 +444,10 @@ void GameWidget::Init_Game()
 void GameWidget::startTimer()
 {
     // 连接计时器信号到游戏更新函数
-    connect(&m_timer, &QTimer::timeout, this, &GameWidget::gameUpdate);
+    connect(&timer, &QTimer::timeout, this, &GameWidget::gameUpdate);
     
     // 启动计时器，每16毫秒触发一次（约60fps）
-    m_timer.start(16);
+    timer.start(16);
 }
 
 // ----------------------------------------------------------------------------
@@ -524,29 +455,6 @@ void GameWidget::startTimer()
 // ----------------------------------------------------------------------------
 void GameWidget::stopTimer()
 {
-    m_timer.stop();
+    timer.stop();
 }
 
-// ----------------------------------------------------------------------------
-// 玩家移动处理（预留接口）
-// ----------------------------------------------------------------------------
-void GameWidget::playerMove()
-{
-    // 空函数，预留用于未来扩展
-}
-
-// ----------------------------------------------------------------------------
-// 游戏阶段处理（预留接口）
-// ----------------------------------------------------------------------------
-void GameWidget::handleGamePhase()
-{
-    // 空函数，预留用于未来扩展
-}
-
-// ----------------------------------------------------------------------------
-// 显示通关成功界面（预留接口）
-// ----------------------------------------------------------------------------
-void GameWidget::showGameComplete()
-{
-    // 空函数，预留用于未来扩展
-}

@@ -3,92 +3,89 @@
 #include <QtMath>
 #include <cstdlib>
 
-Enemy::Enemy(const QPointF& pos, EnemyType type)
-    : m_type(type)
+Enemy::Enemy(const QPointF& pos, int t)
+    : type(t)
 {
-    m_transform.position = pos;
-    initEnemyStats(type);
+    transform.position = pos;
+    initEnemyStats(t);
 }
 
-void Enemy::initEnemyStats(EnemyType type)
+void Enemy::initEnemyStats(int t)
 {
-    switch (type) {
-    case Xieqianji:
-        m_health = 20;
-        m_maxHealth = 20;
-        m_speed = 40.0f;
-        m_namePixmap.load(":/res/image/name_xieqianji.png");
+    switch (t) {
+    case ENEMY_XIEQIANJI:
+        health = 20;
+        maxHealth = 20;
+        speed = 40.0f;
+        namePixmap.load(":/res/image/name_xieqianji.png");
         break;
-    case Muyinzhen:
-        m_health = 50;
-        m_maxHealth = 50;
-        m_speed = 40.0f;
-        m_namePixmap.load(":/res/image/name_muyinzhen.png");
+    case ENEMY_MUYINZHEN:
+        health = 50;
+        maxHealth = 50;
+        speed = 40.0f;
+        namePixmap.load(":/res/image/name_muyinzhen.png");
         break;
-    case Suze:
-        m_health = 100;
-        m_maxHealth = 100;
-        m_speed = 50.0f;
-        m_namePixmap.load(":/res/image/name_suze.png");
+    case ENEMY_SUZE:
+        health = 100;
+        maxHealth = 100;
+        speed = 50.0f;
+        namePixmap.load(":/res/image/name_suze.png");
         break;
     }
 }
 
 void Enemy::setAttackClip(AnimationClip* clip)
 {
-    m_attackClip = clip;
-    if (m_attackClip) {
-        m_animPlayer.play(m_attackClip, true);
+    attackClip = clip;
+    if (attackClip) {
+        animPlayer.play(attackClip, true);
     }
 }
 
 void Enemy::update(float deltaSeconds, const QPointF& playerPos)
 {
-    float dx = playerPos.x() - m_transform.position.x();
+    float dx = playerPos.x() - transform.position.x();
     float dist = qSqrt(dx * dx);
 
-    // 敌人主动向玩家移动，不受最小距离限制
-    // 增加随机移动因素，让敌人看起来更主动
     const float minDistance = 30.0f;
     bool shouldMove = dist > minDistance;
     
-    // 即使玩家不动，敌人也有一定概率主动移动
     if (!shouldMove && dist > 5.0f && (rand() % 50) == 0) {
         shouldMove = true;
     }
     
     if (shouldMove) {
-        m_directionX = (dx > 0) ? 1 : -1;
-        m_transform.position.rx() += m_directionX * m_speed * deltaSeconds;
+        directionX = (dx > 0) ? 1 : -1;
+        transform.position.rx() += directionX * speed * deltaSeconds;
     }
 
     float margin = 20.0f;
-    if (m_transform.position.x() < margin) m_transform.position.setX(margin);
-    if (m_transform.position.x() > 512 - margin) m_transform.position.setX(512 - margin);
+    if (transform.position.x() < margin) transform.position.setX(margin);
+    if (transform.position.x() > 512 - margin) transform.position.setX(512 - margin);
 
-    if (m_type != Muyinzhen) {
-        if (m_isOnGround && (rand() % 200) == 0) {
-            m_velocityY = m_jumpForce;
-            m_isOnGround = false;
+    if (type != ENEMY_MUYINZHEN) {
+        if (isOnGround && (rand() % 200) == 0) {
+            velocityY = jumpForce;
+            isOnGround = false;
         }
 
-        if (!m_isOnGround) {
-            m_velocityY += m_gravity * deltaSeconds;
-            m_transform.position.ry() += m_velocityY * deltaSeconds;
+        if (!isOnGround) {
+            velocityY += gravity * deltaSeconds;
+            transform.position.ry() += velocityY * deltaSeconds;
 
-            const float groundY = 396.0f;  // 512画布下的地面位置
-            if (m_transform.position.y() >= groundY) {
-                m_transform.position.setY(groundY);
-                m_velocityY = 0.0f;
-                m_isOnGround = true;
+            const float groundY = 396.0f;
+            if (transform.position.y() >= groundY) {
+                transform.position.setY(groundY);
+                velocityY = 0.0f;
+                isOnGround = true;
             }
         }
     }
 
-    m_lastPlayerX = playerPos.x();
-    m_lastPlayerY = playerPos.y();
+    lastPlayerX = playerPos.x();
+    lastPlayerY = playerPos.y();
 
-    m_animPlayer.update(deltaSeconds);
+    animPlayer.update(deltaSeconds);
 }
 
 void Enemy::update(float deltaSeconds)
@@ -98,26 +95,25 @@ void Enemy::update(float deltaSeconds)
 
 void Enemy::draw(QPainter* painter) const
 {
-    int drawX = m_transform.position.x();
-    int drawY = m_transform.position.y();
+    int drawX = transform.position.x();
+    int drawY = transform.position.y();
 
-    QPixmap frame = m_animPlayer.getCurrentFrame();
+    QPixmap frame = animPlayer.getCurrentFrame();
     if (!frame.isNull()) {
         int halfW = frame.width() / 2;
         int halfH = frame.height() / 2;
         painter->drawPixmap(drawX - halfW, drawY - halfH, frame);
 
-        float healthPercent = (float)m_health / m_maxHealth;
+        float healthPercent = (float)health / maxHealth;
         int barWidth = 32;
         int barHeight = 4;
-        int barX = m_transform.position.x() - barWidth / 2;
-        int barY = m_transform.position.y() - frame.height() / 2 - 8;
+        int barX = transform.position.x() - barWidth / 2;
+        int barY = transform.position.y() - frame.height() / 2 - 8;
 
-        // 绘制名字图片（在血条上方）
-        if (!m_namePixmap.isNull()) {
-            int nameX = m_transform.position.x() - m_namePixmap.width() / 2;
-            int nameY = barY - m_namePixmap.height() - 2;
-            painter->drawPixmap(nameX, nameY, m_namePixmap);
+        if (!namePixmap.isNull()) {
+            int nameX = transform.position.x() - namePixmap.width() / 2;
+            int nameY = barY - namePixmap.height() - 2;
+            painter->drawPixmap(nameX, nameY, namePixmap);
         }
 
         painter->setPen(QColor(136, 136, 136));
@@ -130,22 +126,20 @@ void Enemy::draw(QPainter* painter) const
 
 QRectF Enemy::getCollisionRect() const
 {
-    QPixmap frame = m_animPlayer.getCurrentFrame();
+    QPixmap frame = animPlayer.getCurrentFrame();
     int w = frame.width() > 0 ? frame.width() : 24;
     int h = frame.height() > 0 ? frame.height() : 48;
     
-    // 慕阴真浮空时，需要向下延伸攻击范围才能打到地面玩家
-    if (m_type == Muyinzhen) {
-        // 向下延伸攻击范围，让慕阴真能够攻击到地面的玩家
-        int attackRange = 120;  // 向下延伸120像素的攻击范围
-        return QRectF(m_transform.position.x() - w/2 - 10, m_transform.position.y() - h, w + 20, h + attackRange);
+    if (type == ENEMY_MUYINZHEN) {
+        int attackRange = 120;
+        return QRectF(transform.position.x() - w/2 - 10, transform.position.y() - h, w + 20, h + attackRange);
     }
     
-    return QRectF(m_transform.position.x() - w/2, m_transform.position.y() - h, w, h);
+    return QRectF(transform.position.x() - w/2, transform.position.y() - h, w, h);
 }
 
 void Enemy::takeDamage(int damage)
 {
-    m_health -= damage;
-    if (m_health < 0) m_health = 0;
+    health -= damage;
+    if (health < 0) health = 0;
 }

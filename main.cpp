@@ -1,5 +1,4 @@
 #include "gamewidget.h"
-
 #include <QApplication>
 #include <QDebug>
 

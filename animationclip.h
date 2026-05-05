@@ -22,11 +22,11 @@ public:
     void addFrame(const QPixmap& pix, int durationMs);
 
     // 获取所有帧
-    const std::vector<Frame>& frames() const { return m_frames; }
-    bool isValid() const { return !m_frames.empty(); }
+    const std::vector<Frame>& frames() const { return framesList; }
+    bool isValid() const { return !framesList.empty(); }
 
 private:
-    std::vector<Frame> m_frames;
+    std::vector<Frame> framesList;
 
 
 };
