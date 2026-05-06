@@ -18,23 +18,6 @@ void Player::setClips(AnimationClip* idle, AnimationClip* walk, AnimationClip* a
     walkClip = walk;
     attackLv1Clip = attack1;
     attackLv2Clip = attack2;
-
-    if (walkClip) {
-        walkClip->loadFromSpriteSheet(":/res/image/player_walk01.png", 8, 100);
-    }
-
-    if (idleClip) {
-        idleClip->loadFromSpriteSheet(":/res/image/p_idle.png", 3, 150);
-        animPlayer.play(idleClip, true);
-    }
-
-    if (attackLv1Clip) {
-        attackLv1Clip->loadFromSpriteSheet(":/res/image/player_attack_lv1.png", 14, 70);
-    }
-
-    if (attackLv2Clip) {
-        attackLv2Clip->loadFromSpriteSheet(":/res/image/player_attack_lv2.png", 13, 77);
-    }
 }
 
 void Player::update(float deltaSeconds)
@@ -77,27 +60,23 @@ void Player::update(float deltaSeconds)
         skill.updateCooldown(deltaSeconds);
     }
 
-    updateAnimation(deltaSeconds);
+
+    if (!isAttacking) {
+        bool moving = (leftPressed || rightPressed);
+
+        if (moving) {
+            if (walkClip && animPlayer.getCurrentClip() != walkClip) {
+                animPlayer.play(walkClip, true);
+            }
+        } else {
+            if (idleClip && animPlayer.getCurrentClip() != idleClip) {
+                animPlayer.play(idleClip, true);
+            }
+        }
+    }
     animPlayer.update(deltaSeconds);
 }
 
-void Player::updateAnimation(float deltaSeconds)
-{
-    Q_UNUSED(deltaSeconds);
-    if (isAttacking) return;
-
-    bool moving = (leftPressed || rightPressed);
-
-    if (moving) {
-        if (walkClip && animPlayer.getCurrentClip() != walkClip) {
-            animPlayer.play(walkClip, true);
-        }
-    } else {
-        if (idleClip && animPlayer.getCurrentClip() != idleClip) {
-            animPlayer.play(idleClip, true);
-        }
-    }
-}
 
 void Player::attack(int skillIndex)
 {

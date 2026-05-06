@@ -327,6 +327,7 @@ void GameWidget::keyPressEvent(QKeyEvent* event)
             xieqianjiDefeated = false;
             muyinzhenDefeated = false;
             suzeDefeated = false;
+            player.setPosition(QPointF(100, 396));
             repaint();
         }
         return;
@@ -343,6 +344,7 @@ void GameWidget::keyPressEvent(QKeyEvent* event)
             xieqianjiDefeated = false;
             muyinzhenDefeated = false;
             suzeDefeated = false;
+            player.setPosition(QPointF(100, 396));
             repaint();
         }
         return;

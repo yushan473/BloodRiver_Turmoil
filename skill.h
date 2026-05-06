@@ -2,8 +2,7 @@
 #define SKILL_H
 
 #include <QString>
-
-class AnimationClip;   // Ç°ÏòÉùÃ÷
+#include "AnimationClip.h"
 
 class Skill
 {

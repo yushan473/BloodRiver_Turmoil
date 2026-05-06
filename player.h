@@ -29,6 +29,7 @@ public:
     void attack(int skillIndex = 0);
 
     void setClips(AnimationClip* idle, AnimationClip* walk, AnimationClip* attack1, AnimationClip* attack2);
+    void setPosition(const QPointF& pos) { transform.position = pos; }
 
     bool isOnGround() const { return onGround; }
 
@@ -55,8 +56,6 @@ private:
     AnimationClip* walkClip = nullptr;
     AnimationClip* attackLv1Clip = nullptr;
     AnimationClip* attackLv2Clip = nullptr;
-
-    void updateAnimation(float deltaSeconds);
 };
 
 #endif // PLAYER_H
