@@ -13,7 +13,6 @@ void NPC::setIdleClip(AnimationClip* clip)
 {
     idleClip = clip;
     if (idleClip) {
-        idleClip->loadFromSpriteSheet(":/res/image/npc_Suzhi_idle.png", 3, 100);
         animPlayer.play(idleClip, true);
     }
 }
@@ -27,7 +26,6 @@ bool NPC::isPlayerNearby(const QPointF& playerPos) const
 
 void NPC::update(float deltaSeconds)
 {
-    Q_UNUSED(deltaSeconds);
     animPlayer.update(deltaSeconds);
 }
 

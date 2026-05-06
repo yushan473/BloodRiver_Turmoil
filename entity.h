@@ -9,7 +9,7 @@ class Entity
 public:
     virtual ~Entity() = default;
 
-    // 纯虚函数：所有实体必须实现
+    // 纯虚函数
     virtual void update(float deltaSeconds) = 0;
     virtual void draw(QPainter* painter) const = 0;
     virtual QRectF getCollisionRect() const = 0;

@@ -4,35 +4,21 @@
 #include "NPC.h"
 #include "AnimationClip.h"
 #include "AnimationPlayer.h"
-
 #include <QPainter>
 #include <QElapsedTimer>
 #include <QKeyEvent>
-#include <QDateTime>
 #include <QDebug>
 #include <QRandomGenerator>
 
 GameWidget::GameWidget(QWidget *parent)
     : QWidget(parent)
 {
-    // ÉèÖÃ´°¿Ú´óĞ¡Îª 512x512 ÏñËØ
     setFixedSize(512, 512);
-    
-    // ÉèÖÃ½¹µã²ßÂÔ£¬È·±£ÄÜ½ÓÊÕ¼üÅÌÊÂ¼ş
     setFocusPolicy(Qt::StrongFocus);
-    
-    // ³õÊ¼»¯ÓÎÏ·×´Ì¬ºÍ¼ÆÊ±Æ÷
     Init_Game();
     startTimer();
-    
-    // ±£´æÈ«¾ÖÖ¸Õë
-    //widget = this;
-
-    // ¼ÓÔØÓÎÏ·×ÊÔ´
     loadBackground();
     loadAnimations();
-
-    // ÉèÖÃÍæ¼Ò¶¯»­¼ô¼­
     player.setClips(&idleClip, &walkClip, &attackLv1Clip, &attackLv2Clip);
 
     bgMusic = new QMediaPlayer(this);
@@ -45,15 +31,8 @@ GameWidget::GameWidget(QWidget *parent)
 
     musicOnImage.load(":/res/image/music_on.png");
     musicOffImage.load(":/res/image/music_off.png");
-
-    // ÓÅ»¯äÖÈ¾ĞÔÄÜ
-    setAttribute(Qt::WA_NoSystemBackground, true);
-    setAttribute(Qt::WA_PaintOnScreen, false);
 }
 
-// ----------------------------------------------------------------------------
-// Îö¹¹º¯Êı - ÊÍ·Å×ÊÔ´
-// ----------------------------------------------------------------------------
 GameWidget::~GameWidget()
 {
     delete npc;
@@ -61,32 +40,23 @@ GameWidget::~GameWidget()
     delete audioOutput;
 }
 
-// ----------------------------------------------------------------------------
-// ¼ÓÔØÓÎÏ·±³¾°Í¼
-// ----------------------------------------------------------------------------
 void GameWidget::loadBackground()
 {
     background.load(":/res/image/background.png");
 }
 
-// ----------------------------------------------------------------------------
-// ¼ÓÔØËùÓĞ¶¯»­×ÊÔ´ºÍUIÍ¼Æ¬
-// ----------------------------------------------------------------------------
 void GameWidget::loadAnimations()
 {
-    // ========== Íæ¼Ò¶¯»­ ==========
-    idleClip.loadFromSpriteSheet(":/res/image/p_idle.png", 3, 150);      // ´ı»ú¶¯»­£¨3Ö¡£¬Ã¿Ö¡150ms£©
-    walkClip.loadFromSpriteSheet(":/res/image/player_walk01.png", 8, 100); // ĞĞ×ß¶¯»­£¨8Ö¡£¬Ã¿Ö¡100ms£©
-    attackLv1Clip.loadFromSpriteSheet(":/res/image/player_attack_lv1.png", 14, 70); // Çá¹¥»÷£¨14Ö¡£¬Ã¿Ö¡70ms£©
-    attackLv2Clip.loadFromSpriteSheet(":/res/image/player_attack_lv2.png", 13, 77); // ÖØ¹¥»÷£¨13Ö¡£¬Ã¿Ö¡77ms£©
+    idleClip.loadFromSpriteSheet(":/res/image/p_idle.png", 3, 150);
+    walkClip.loadFromSpriteSheet(":/res/image/player_walk01.png", 8, 100);
+    attackLv1Clip.loadFromSpriteSheet(":/res/image/player_attack_lv1.png", 14, 70);
+    attackLv2Clip.loadFromSpriteSheet(":/res/image/player_attack_lv2.png", 13, 77);
 
-    // ========== µĞÈË¶¯»­ ==========
-    xieqianjiClip.loadFromSpriteSheet(":/res/image/enemy_Xieqianji_attack.png", 5, 100); // Ğ»Ç§»ú
-    muyinzhenClip.loadFromSpriteSheet(":/res/image/enemy_Muyinzhen_attack.png", 5, 100); // Ä½ÒõÕæ
-    suzeClip.loadFromSpriteSheet(":/res/image/enemy_Suze_attack.png", 5, 100);         // ËÕÔó
+    xieqianjiClip.loadFromSpriteSheet(":/res/image/enemy_Xieqianji_attack.png", 5, 100);
+    muyinzhenClip.loadFromSpriteSheet(":/res/image/enemy_Muyinzhen_attack.png", 5, 100);
+    suzeClip.loadFromSpriteSheet(":/res/image/enemy_Suze_attack.png", 5, 100);
 
-    // ========== NPC¶¯»­ ==========
-    npcSuzhiClip.loadFromSpriteSheet(":/res/image/npc_Suzhi_idle.png", 3, 100); // ËÕÖ¹´ı»ú
+    npcSuzhiClip.loadFromSpriteSheet(":/res/image/npc_Suzhi_idle.png", 3, 100);
     
     startImage.load(":/res/image/start.png");
     helpImage.load(":/res/image/help.png");
@@ -102,69 +72,46 @@ void GameWidget::loadAnimations()
     }
 }
 
-// ----------------------------------------------------------------------------
-// ÓÎÏ·Ö÷Ñ­»· - Ã¿Ö¡Ö´ĞĞÒ»´Î£¬¸üĞÂÓÎÏ·×´Ì¬
-// ----------------------------------------------------------------------------
 void GameWidget::gameUpdate()
 {
-    // ¼ÆËãÖ¡¼ä¸ôÊ±¼ä£¨deltaTime£©£¬ÓÃÓÚÆ½»¬¶¯»­
     static QElapsedTimer elapsed;
     if (!elapsed.isValid()) elapsed.start();
     float deltaSec = elapsed.restart() / 1000.0f;
     
-    // ÏŞÖÆ×î´óÖ¡¼ä¸ôÎª 33ms£¨Ô¼30fps£©£¬±ÜÃâ¿¨¶ÙºóÍ»È»Ìø±ä
     if (deltaSec > 0.033f) deltaSec = 0.033f;
 
-    // Èç¹ûÓÎÏ·Î´ÔËĞĞ»òÔİÍ££¬Ö±½Ó·µ»Ø
     if (!isRunning || isStopped) return;
-    
-    // Èç¹ûÔÚ¿ªÊ¼½çÃæ»ò°ïÖú½çÃæ»òÓÎÏ·½áÊø½çÃæ£¬²»¸üĞÂÓÎÏ·Âß¼­
     if (gameState == PHASE_START || gameState == PHASE_HELP || gameState == PHASE_GAMEOVER) return;
 
-    // ========== ¸üĞÂÍæ¼Ò×´Ì¬ ==========
     player.update(deltaSec);
 
-    // ========== ¸üĞÂµĞÈË×´Ì¬ ==========
     for (auto& enemy : enemies) {
-        enemy.update(deltaSec, player.getCollisionRect().center());
+        enemy.setPlayerPosition(player.transform.position);
+        enemy.update(deltaSec);
     }
-
-    // ========== ¸üĞÂNPC×´Ì¬ ==========
     if (npc) {
         npc->update(deltaSec);
-        
-        // ¼ì²éÍæ¼ÒÊÇ·ñ¿¿½üNPC£¬Èç¹ûÊÇÔò´¥·¢¶Ô»°
         if (!showDialog && npc->isPlayerNearby(player.getCollisionRect().center())) {
             showDialog = true;
             currentDialogIndex = 0;
-            // ×¢Òâ£ºÕâÀï²»ÄÜÉèÖÃisStopped=true£¬·ñÔòÍæ¼ÒÎŞ·¨ÒÆ¶¯¿¿½üNPC
         }
     }
 
-    // ========== Íæ¼ÒÊÜÉË¼ì²â ==========
-    qint64 currentTime = QDateTime::currentMSecsSinceEpoch();
     for (const auto& enemy : enemies) {
-        // Èç¹ûÍæ¼ÒºÍµĞÈËÅö×²
-        if (enemy.getCollisionRect().intersects(player.getCollisionRect())) {
-            if (!isPlayerInvincible && (currentTime - lastDamageTime) > damageCooldownMs) {
-                player.takeDamage(5);
-                lastDamageTime = currentTime;
-                isPlayerInvincible = true;
-                QTimer::singleShot(500, this, [this]() { isPlayerInvincible = false; });
-            }
-            break;  // Ö»´¦ÀíµÚÒ»¸öÅö×²µÄµĞÈË
+        if (!isPlayerInvincible && enemy.getCollisionRect().intersects(player.getCollisionRect())) {
+            player.takeDamage(5);
+            isPlayerInvincible = true;
+            QTimer::singleShot(500, this, &GameWidget::onInvincibilityEnd);
+            break;
         }
     }
 
-    // ========== ¼ì²éÍæ¼ÒËÀÍö ==========
     if (!player.isAlive()) {
         gameState = PHASE_GAMEOVER;
         isRunning = false;
         enemies.clear();
     }
 
-    // ========== ¼ì²éµĞÈËËÀÍö£¬ÍÆ½ø¾çÇé ==========
-    // ´ÓºóÍùÇ°±éÀú£¬·½±ãÉ¾³ıÔªËØ
     for (int i = enemies.size()-1; i >= 0; --i) {
         if (!enemies[i].isAlive()) {
             int type = enemies[i].getType();
@@ -188,32 +135,26 @@ void GameWidget::gameUpdate()
             }
         }
     }
-
-    // ´¥·¢½çÃæÖØ»æ
     update();
 }
 
-// ----------------------------------------------------------------------------
-// »æÖÆº¯Êı - ¸ºÔğ»æÖÆÕû¸öÓÎÏ·»­Ãæ
-// ----------------------------------------------------------------------------
+void GameWidget::onInvincibilityEnd()
+{
+    isPlayerInvincible = false;
+}
+
 void GameWidget::paintEvent(QPaintEvent* event)
 {
-    Q_UNUSED(event);  // ²»ĞèÒªÊ¹ÓÃÊÂ¼ş²ÎÊı
 
-    // ´´½¨ÀëÆÁ»º³å£¨Ë«»º³å¼¼Êõ£¬·ÀÖ¹»­ÃæÉÁË¸£©
     QPixmap buffer(512, 512);
     QPainter bufferPainter(&buffer);
 
-    // ========== »æÖÆ±³¾° ==========
     if (!background.isNull()) {
-        // »æÖÆÓÎÏ·±³¾°Í¼£¬Ëõ·Åµ½512x512
         bufferPainter.drawPixmap(0, 0, background.scaled(512, 512, Qt::IgnoreAspectRatio, Qt::FastTransformation));
     } else {
-        // Èç¹û±³¾°Í¼¼ÓÔØÊ§°Ü£¬Ìî³äÉî»ÒÉ«
         bufferPainter.fillRect(buffer.rect(), QColor(40, 40, 40));
     }
 
-    // ¹Ø±ÕÆ½»¬Ëõ·Å£¬±£³ÖÏñËØ·ç¸ñ
     bufferPainter.setRenderHint(QPainter::SmoothPixmapTransform, false);
 
     if (gameState == PHASE_START) {
@@ -264,15 +205,11 @@ void GameWidget::paintEvent(QPaintEvent* event)
         bufferPainter.drawText(btnX + 6, btnY + 18, musicEnabled ? "?" : "?");
     }
 
-    // ½«»º³åÄÚÈİ»æÖÆµ½ÆÁÄ»
     QPainter painter(this);
     painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
     painter.drawPixmap(rect(), buffer, buffer.rect());
 }
 
-// ----------------------------------------------------------------------------
-// Êó±êµã»÷ÊÂ¼ş´¦Àí
-// ----------------------------------------------------------------------------
 void GameWidget::mousePressEvent(QMouseEvent* event)
 {
     int btnX = 512 - 32;
@@ -290,9 +227,6 @@ void GameWidget::mousePressEvent(QMouseEvent* event)
     }
 }
 
-// ----------------------------------------------------------------------------
-// ¼üÅÌ°´¼ü°´ÏÂÊÂ¼ş´¦Àí
-// ----------------------------------------------------------------------------
 void GameWidget::keyPressEvent(QKeyEvent* event)
 {
     if (gameState == PHASE_START) {
@@ -320,32 +254,15 @@ void GameWidget::keyPressEvent(QKeyEvent* event)
 
     if (gameState == PHASE_GAMEOVER) {
         if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
-            gameState = PHASE_START;
-            isRunning = false;
-            enemies.clear();
-            player.takeDamage(-100);
-            xieqianjiDefeated = false;
-            muyinzhenDefeated = false;
-            suzeDefeated = false;
-            player.setPosition(QPointF(100, 396));
-            repaint();
+            resetToStart();
         }
         return;
     }
-
     if (!isRunning && gameState != PHASE_SUZHI_DIALOG && gameState != PHASE_WIN) return;
 
     if (gameState == PHASE_WIN) {
         if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
-            gameState = PHASE_START;
-            isRunning = false;
-            enemies.clear();
-            player.takeDamage(-100);
-            xieqianjiDefeated = false;
-            muyinzhenDefeated = false;
-            suzeDefeated = false;
-            player.setPosition(QPointF(100, 396));
-            repaint();
+            resetToStart();
         }
         return;
     }
@@ -370,21 +287,17 @@ void GameWidget::keyPressEvent(QKeyEvent* event)
         return;
     }
 
-    // ========== ÓÎÏ·²Ù×÷¼ü ==========
     switch (event->key()) {
     case Qt::Key_A:
     case Qt::Key_Left:
-        // Ïò×óÒÆ¶¯
         player.setMoveLeft(true);
         break;
     case Qt::Key_D:
     case Qt::Key_Right:
-        // ÏòÓÒÒÆ¶¯
         player.setMoveRight(true);
         break;
     case Qt::Key_W:
     case Qt::Key_Up:
-        // ÌøÔ¾
         player.setJump(true);
         break;
     case Qt::Key_J:
@@ -396,79 +309,67 @@ void GameWidget::keyPressEvent(QKeyEvent* event)
         checkHit(attackDamage);
         break;
     case Qt::Key_P:
-        // P¼ü£ºÔİÍ£/¼ÌĞøÓÎÏ·
         isStopped = !isStopped;
         break;
     }
 }
 
-// ----------------------------------------------------------------------------
-// ¼üÅÌ°´¼üÊÍ·ÅÊÂ¼ş´¦Àí
-// ----------------------------------------------------------------------------
 void GameWidget::keyReleaseEvent(QKeyEvent* event)
 {
     switch (event->key()) {
     case Qt::Key_A:
     case Qt::Key_Left:
-        // ËÉ¿ª×óÒÆ¼ü
         player.setMoveLeft(false);
         break;
     case Qt::Key_D:
     case Qt::Key_Right:
-        // ËÉ¿ªÓÒÒÆ¼ü
         player.setMoveRight(false);
         break;
     case Qt::Key_W:
     case Qt::Key_Up:
-        // ËÉ¿ªÌøÔ¾¼ü
         player.setJump(false);
         break;
     }
 }
 
-// ----------------------------------------------------------------------------
-// ¼ì²é¹¥»÷ÊÇ·ñÃüÖĞµĞÈË
-// ----------------------------------------------------------------------------
 void GameWidget::checkHit(int damage)
 {
-    // »ñÈ¡Íæ¼ÒµÄ¹¥»÷·¶Î§
     QRectF attackRange = player.getAttackRange();
     
-    // ±éÀúËùÓĞµĞÈË£¬¼ì²éÊÇ·ñÔÚ¹¥»÷·¶Î§ÄÚ
     for (int i = 0; i < enemies.size(); ++i) {
         if (attackRange.intersects(enemies[i].getCollisionRect())) {
-            // Èç¹ûÃüÖĞ£¬µĞÈËÊÜµ½ÉËº¦
             enemies[i].takeDamage(damage);
-            break;  // Ö»¹¥»÷µÚÒ»¸öÃüÖĞµÄµĞÈË
+            break;//å…ˆåªæ‰“ä¸€ä¸ª
         }
     }
 }
 
-// ----------------------------------------------------------------------------
-// ³õÊ¼»¯ÓÎÏ·×´Ì¬
-// ----------------------------------------------------------------------------
 void GameWidget::Init_Game()
 {
-    isRunning = true;  // ÉèÖÃÓÎÏ·ÎªÔËĞĞ×´Ì¬
+    isRunning = true;
 }
 
-// ----------------------------------------------------------------------------
-// Æô¶¯ÓÎÏ·¼ÆÊ±Æ÷£¨Ô¼60fps£©
-// ----------------------------------------------------------------------------
 void GameWidget::startTimer()
 {
-    // Á¬½Ó¼ÆÊ±Æ÷ĞÅºÅµ½ÓÎÏ·¸üĞÂº¯Êı
     connect(&timer, &QTimer::timeout, this, &GameWidget::gameUpdate);
-    
-    // Æô¶¯¼ÆÊ±Æ÷£¬Ã¿16ºÁÃë´¥·¢Ò»´Î£¨Ô¼60fps£©
     timer.start(16);
 }
 
-// ----------------------------------------------------------------------------
-// Í£Ö¹ÓÎÏ·¼ÆÊ±Æ÷
-// ----------------------------------------------------------------------------
 void GameWidget::stopTimer()
 {
     timer.stop();
+}
+
+void GameWidget::resetToStart()
+{
+    gameState = PHASE_START;
+    isRunning = false;
+    enemies.clear();
+    player.takeDamage(-100);  // æ¢å¤æ»¡è¡€
+    xieqianjiDefeated = false;
+    muyinzhenDefeated = false;
+    suzeDefeated = false;
+    player.setPosition(QPointF(100, 396));
+    repaint();
 }
 

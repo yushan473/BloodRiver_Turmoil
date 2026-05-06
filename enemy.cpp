@@ -3,6 +3,9 @@
 #include <QtMath>
 #include <cstdlib>
 
+const float GRAVITY = 800.0f;
+const float JUMP_FORCE = -300.0f;
+
 Enemy::Enemy(const QPointF& pos, int t)
     : type(t)
 {
@@ -42,18 +45,20 @@ void Enemy::setAttackClip(AnimationClip* clip)
     }
 }
 
-void Enemy::update(float deltaSeconds, const QPointF& playerPos)
+
+
+void Enemy::update(float deltaSeconds)
 {
     float dx = playerPos.x() - transform.position.x();
     float dist = qSqrt(dx * dx);
 
     const float minDistance = 30.0f;
     bool shouldMove = dist > minDistance;
-    
+
     if (!shouldMove && dist > 5.0f && (rand() % 50) == 0) {
         shouldMove = true;
     }
-    
+
     if (shouldMove) {
         directionX = (dx > 0) ? 1 : -1;
         transform.position.rx() += directionX * speed * deltaSeconds;
@@ -65,12 +70,12 @@ void Enemy::update(float deltaSeconds, const QPointF& playerPos)
 
     if (type != ENEMY_MUYINZHEN) {
         if (isOnGround && (rand() % 200) == 0) {
-            velocityY = jumpForce;
+            velocityY = JUMP_FORCE;
             isOnGround = false;
         }
 
         if (!isOnGround) {
-            velocityY += gravity * deltaSeconds;
+            velocityY += GRAVITY * deltaSeconds;
             transform.position.ry() += velocityY * deltaSeconds;
 
             const float groundY = 396.0f;
@@ -86,11 +91,6 @@ void Enemy::update(float deltaSeconds, const QPointF& playerPos)
     lastPlayerY = playerPos.y();
 
     animPlayer.update(deltaSeconds);
-}
-
-void Enemy::update(float deltaSeconds)
-{
-    Q_UNUSED(deltaSeconds);
 }
 
 void Enemy::draw(QPainter* painter) const

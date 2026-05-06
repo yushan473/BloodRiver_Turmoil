@@ -20,8 +20,8 @@ public:
     Enemy(const QPointF& pos, int type = ENEMY_XIEQIANJI);
     void setAttackClip(AnimationClip* clip);
 
-    void update(float deltaSeconds, const QPointF& playerPos);
     void update(float deltaSeconds)override;
+    void setPlayerPosition(const QPointF& pos) { playerPos = pos; }
     void draw(QPainter* painter) const override;
 
     QRectF getCollisionRect() const override;
@@ -46,10 +46,9 @@ private:
 
     bool isOnGround = true;
     float velocityY = 0.0f;
-    static constexpr float gravity = 800.0f;
-    static constexpr float jumpForce = -300.0f;
 
     QPixmap namePixmap;
+    QPointF playerPos;
 
     void initEnemyStats(int type);
 };

@@ -1,4 +1,4 @@
-#include "gamewidget.h"
+﻿#include "gamewidget.h"
 #include <QApplication>
 #include <QDebug>
 

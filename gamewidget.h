@@ -40,6 +40,7 @@ public:
 
 private slots:
     void gameUpdate();
+    void onInvincibilityEnd();
 private:
     Player player;
     QList<Enemy> enemies;
@@ -78,8 +79,6 @@ private:
     int currentDialogIndex = 0;
 
     bool isPlayerInvincible = false;
-    qint64 lastDamageTime = 0;
-    const int damageCooldownMs = 1000;
 
     QPixmap startImage;
     QPixmap helpImage;
@@ -100,6 +99,7 @@ private:
     void loadAnimations();
     void loadBackground();
     void checkHit(int damage);
+    void resetToStart();
 };
 
 #endif // GAMEWIDGET_H

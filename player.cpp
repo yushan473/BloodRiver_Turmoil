@@ -8,8 +8,8 @@ const float JUMP_FORCE = -245.0f;
 Player::Player()
 {
     transform.position = {100, 396};
-    skills.emplace_back("防守技能", 0, 5, nullptr);
-    skills.emplace_back("攻击技能", 0, 10, nullptr);
+    skills.emplace_back("防守技能", 500, 5);
+    skills.emplace_back("攻击技能", 800, 10);
 }
 
 void Player::setClips(AnimationClip* idle, AnimationClip* walk, AnimationClip* attack1, AnimationClip* attack2)
@@ -83,9 +83,10 @@ void Player::attack(int skillIndex)
     if (isAttacking) return;
     if (skillIndex < 0 || skillIndex >= (int)skills.size()) return;
 
-    currentAttackSkill = skillIndex;
     Skill& skill = skills[skillIndex];
 
+    if (!skill.canCast()) return;
+    currentAttackSkill = skillIndex;
     skill.cast();
 
     AnimationClip* clip = (skillIndex == 0) ? attackLv1Clip : attackLv2Clip;

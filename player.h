@@ -32,9 +32,9 @@ public:
     void setPosition(const QPointF& pos) { transform.position = pos; }
 
     bool isOnGround() const { return onGround; }
+    Transform transform;
 
 private:
-    Transform transform;
     AnimationPlayer animPlayer;
     std::vector<Skill> skills;
     int health = 100;
