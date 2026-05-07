@@ -14,6 +14,7 @@
 #include "Enemy.h"
 #include "NPC.h"
 #include "AnimationClip.h"
+#include "fragment.h"
 
 class GameWidget : public QWidget
 {
@@ -43,15 +44,23 @@ private slots:
     void onInvincibilityEnd();
 private:
     Player player;
-    QList<Enemy> enemies;
+    QList<Enemy*> enemies;
     NPC* npc = nullptr;
+
     QPixmap background;
+    int cameraX = 0;
+    //const int bgwidth = 512;
+    const int window_wid = 512;
+    const int player_pos = 200;
+
     QTimer timer;
     // 玩家动画
     AnimationClip idleClip;
     AnimationClip walkClip;
     AnimationClip attackLv1Clip;
     AnimationClip attackLv2Clip;
+    AnimationClip jumpClip;
+    AnimationClip superClip;
     // 敌人动画
     AnimationClip xieqianjiClip;
     AnimationClip muyinzhenClip;
@@ -62,18 +71,18 @@ private:
     enum {
         PHASE_START,
         PHASE_HELP,
-        PHASE_XIEQIANJI,
+        PHASE_INGAME,
         PHASE_SUZHI_DIALOG,
-        PHASE_MUYINZHEN,
-        PHASE_SUZE,
         PHASE_WIN,
         PHASE_GAMEOVER
     };
     int gameState = PHASE_START;
 
-    bool xieqianjiDefeated = false;
-    bool muyinzhenDefeated = false;
-    bool suzeDefeated = false;
+    // 计时 & NPC 冻结
+    float gameTimer = 0.0f;
+    bool isFrozen = false;
+    int freezeNpcIndex = 0;
+    const float freezeTimes[3] = {8.0f};
 
     bool showDialog = false;
     int currentDialogIndex = 0;
@@ -86,8 +95,8 @@ private:
     QPixmap successImage;
     QList<QPixmap> dialogImages;
 
-    const int defenseDamage = 5;
-    const int attackDamage = 10;
+    const int defenseDamage = 10;
+    const int attackDamage = 20;
 
     QMediaPlayer* bgMusic = nullptr;
     QAudioOutput* audioOutput = nullptr;
@@ -100,6 +109,21 @@ private:
     void loadBackground();
     void checkHit(int damage);
     void resetToStart();
+
+    //enemy生成
+    float spawnTimer = 0.0f;
+    float spawnInterval = 3.0f;
+    const float MAX_SPAWN_INTERVAL = 3.0f;
+    const float MIN_SPAWN_INTERVAL = 1.0f;
+    const int MAX_ENEMIES = 3;
+
+    //fragment
+    QList<Fragment*> fragments;
+    int collectedFragments = 0;
+    const int TARGET_FRAGMENTS = 20;
+    float distanceSinceLastFragment = 0.0f;
+    const float FRAGMENT_SPAWN_DISTANCE = 300.0f;
+
 };
 
 #endif // GAMEWIDGET_H

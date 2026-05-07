@@ -17,21 +17,21 @@ void Enemy::initEnemyStats(int t)
 {
     switch (t) {
     case ENEMY_XIEQIANJI:
-        health = 20;
-        maxHealth = 20;
-        speed = 40.0f;
+        health = 40;
+        maxHealth = 40;
+        speed = 300.0f;
         namePixmap.load(":/res/image/name_xieqianji.png");
         break;
     case ENEMY_MUYINZHEN:
-        health = 50;
-        maxHealth = 50;
-        speed = 40.0f;
+        health = 60;
+        maxHealth = 60;
+        speed = 320.0f;
         namePixmap.load(":/res/image/name_muyinzhen.png");
         break;
     case ENEMY_SUZE:
         health = 100;
         maxHealth = 100;
-        speed = 50.0f;
+        speed = 320.0f;
         namePixmap.load(":/res/image/name_suze.png");
         break;
     }
@@ -41,7 +41,7 @@ void Enemy::setAttackClip(AnimationClip* clip)
 {
     attackClip = clip;
     if (attackClip) {
-        animPlayer.play(attackClip, true);
+        animPlayer.play(attackClip, false);
     }
 }
 
@@ -64,9 +64,9 @@ void Enemy::update(float deltaSeconds)
         transform.position.rx() += directionX * speed * deltaSeconds;
     }
 
-    float margin = 20.0f;
-    if (transform.position.x() < margin) transform.position.setX(margin);
-    if (transform.position.x() > 512 - margin) transform.position.setX(512 - margin);
+    // float margin = 20.0f;
+    // if (transform.position.x() < margin) transform.position.setX(margin);
+    // if (transform.position.x() > 512 - margin) transform.position.setX(512 - margin);
 
     if (type != ENEMY_MUYINZHEN) {
         if (isOnGround && (rand() % 200) == 0) {

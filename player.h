@@ -28,17 +28,21 @@ public:
     void setJump(bool pressed) { jumpPressed = pressed; }
     void attack(int skillIndex = 0);
 
-    void setClips(AnimationClip* idle, AnimationClip* walk, AnimationClip* attack1, AnimationClip* attack2);
+    void setClips(AnimationClip* idle, AnimationClip* walk, AnimationClip* attack1, AnimationClip* attack2, AnimationClip* jump);
     void setPosition(const QPointF& pos) { transform.position = pos; }
 
     bool isOnGround() const { return onGround; }
     Transform transform;
 
+    //二段跳
+    bool canDoubleJump = false;
+    bool doubleJumpUsed = false;
+
 private:
     AnimationPlayer animPlayer;
     std::vector<Skill> skills;
-    int health = 100;
-    int maxHealth = 100;
+    int health = 200;
+    int maxHealth = 200;
 
     float speed = 300.0f;
     bool leftPressed = false;
@@ -56,6 +60,13 @@ private:
     AnimationClip* walkClip = nullptr;
     AnimationClip* attackLv1Clip = nullptr;
     AnimationClip* attackLv2Clip = nullptr;
+    AnimationClip* jumpClip = nullptr;
+
+public:
+    void playSuperAnimation();
+    bool isPlayingSuper = false;
+    AnimationClip* superClip = nullptr;
+    AnimationPlayer& getAnimationPlayer() { return animPlayer; }
 };
 
 #endif // PLAYER_H

@@ -8,8 +8,6 @@
         <file>image/enemy_Xieqianji_attack.png</file>
         <file>image/enemy_Muyinzhen_attack.png</file>
         <file>image/player_attack_lv1.png</file>
-        <file>image/background.png</file>
-        <file>image/help.png</file>
         <file>image/d1.png</file>
         <file>image/d2.png</file>
         <file>image/d3.png</file>
@@ -32,5 +30,10 @@
         <file>image/name_xieqianji.png</file>
         <file>image/music_off.png</file>
         <file>image/music_on.png</file>
+        <file>image/player_jump.png</file>
+        <file>image/bg_loop.png</file>
+        <file>image/fragment.png</file>
+        <file>image/player_r.png</file>
+        <file>image/help.png</file>
     </qresource>
 </RCC>

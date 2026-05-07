@@ -3,7 +3,7 @@
 #include <QPainter>
 #include <QDebug>
 const float GRAVITY = 700.0f;
-const float JUMP_FORCE = -245.0f;
+const float JUMP_FORCE = -320.0f;
 
 Player::Player()
 {
@@ -12,12 +12,13 @@ Player::Player()
     skills.emplace_back("攻击技能", 800, 10);
 }
 
-void Player::setClips(AnimationClip* idle, AnimationClip* walk, AnimationClip* attack1, AnimationClip* attack2)
+void Player::setClips(AnimationClip* idle, AnimationClip* walk, AnimationClip* attack1, AnimationClip* attack2, AnimationClip* jump)
 {
     idleClip = idle;
     walkClip = walk;
     attackLv1Clip = attack1;
     attackLv2Clip = attack2;
+    jumpClip = jump;
 }
 
 void Player::update(float deltaSeconds)
@@ -27,14 +28,25 @@ void Player::update(float deltaSeconds)
     if (rightPressed) moveX = 1.0f;
     transform.position.rx() += moveX * speed * deltaSeconds;
 
-    float halfW = 24;
-    if (transform.position.x() < halfW) transform.position.setX(halfW);
-    if (transform.position.x() > 512 - halfW) transform.position.setX(512 - halfW);
+    //float halfW = 24;
+    // if (transform.position.x() < halfW) transform.position.setX(halfW);
+    // if (transform.position.x() > 512 - halfW) transform.position.setX(512 - halfW);
 
-    if (jumpPressed && onGround) {
-        velocityY = JUMP_FORCE;
-        onGround = false;
-        jumpPressed = false;
+    if (jumpPressed) {
+        if (onGround) {
+            // 地面跳跃
+            velocityY = JUMP_FORCE;
+            onGround = false;
+            jumpPressed = false;
+            doubleJumpUsed = false;// 重置二段跳标记
+            canDoubleJump = true;// 允许二段跳
+        }
+        else if (canDoubleJump && !doubleJumpUsed) {
+            // 二段跳
+            velocityY = JUMP_FORCE;
+            doubleJumpUsed = true;
+            jumpPressed = false;
+        }
     }
 
     if (!onGround) {
@@ -46,6 +58,8 @@ void Player::update(float deltaSeconds)
             transform.position.setY(groundY);
             velocityY = 0.0f;
             onGround = true;
+            doubleJumpUsed = false;
+            canDoubleJump = true;
         }
     }
 
@@ -60,21 +74,30 @@ void Player::update(float deltaSeconds)
         skill.updateCooldown(deltaSeconds);
     }
 
-
-    if (!isAttacking) {
-        bool moving = (leftPressed || rightPressed);
-
-        if (moving) {
-            if (walkClip && animPlayer.getCurrentClip() != walkClip) {
-                animPlayer.play(walkClip, true);
+    //动画（大招时不允许切换）
+    if (!isAttacking && !isPlayingSuper) {
+        if (!onGround) {
+            if (jumpClip && animPlayer.getCurrentClip() != jumpClip) {
+                animPlayer.play(jumpClip, true);
             }
         } else {
-            if (idleClip && animPlayer.getCurrentClip() != idleClip) {
-                animPlayer.play(idleClip, true);
+            bool moving = (leftPressed || rightPressed);
+            if (moving) {
+                if (walkClip && animPlayer.getCurrentClip() != walkClip) {
+                    animPlayer.play(walkClip, true);
+                }
+            } else {
+                if (idleClip && animPlayer.getCurrentClip() != idleClip) {
+                    animPlayer.play(idleClip, true);
+                }
             }
         }
     }
     animPlayer.update(deltaSeconds);
+
+    if (isPlayingSuper && animPlayer.isFinished()) {
+        isPlayingSuper = false;
+    }
 }
 
 
@@ -102,8 +125,19 @@ void Player::draw(QPainter* painter) const
     QPixmap frame = animPlayer.getCurrentFrame();
 
     if (!frame.isNull()) {
-        int x = transform.position.x() - frame.width() / 2;
-        int y = transform.position.y() - frame.height() + 12;
+        int x, y;
+
+        if (isPlayingSuper) {
+            // 大招动画：强制居中绘制，让玩家在大招动画中间
+            x = transform.position.x() - frame.width() / 2;
+            y = transform.position.y() - frame.height() / 2;
+        } else {
+            // 普通动画：原来的绘制逻辑
+            x = transform.position.x() - frame.width() / 2;
+            y = transform.position.y() - frame.height() + 12;
+        }
+
+
         painter->drawPixmap(x, y, frame);
 
         float healthPercent = (float)health / maxHealth;
@@ -139,4 +173,16 @@ void Player::takeDamage(int amount)
     if (health < 0) health = 0;
     if (health > maxHealth) health = maxHealth;
     qDebug() << "Player health:" << health;
+}
+
+void Player::playSuperAnimation()
+{
+    qDebug() << "playSuperAnimation 被调用";
+    if (superClip) {
+        qDebug() << "superClip 不为空，开始播放";
+        animPlayer.play(superClip, false);
+        isPlayingSuper = true;
+    } else {
+        qDebug() << "superClip 为空！";
+    }
 }

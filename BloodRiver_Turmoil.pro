@@ -15,6 +15,7 @@ SOURCES += \
     animationplayer.cpp \
     enemy.cpp \
     entity.cpp \
+    fragment.cpp \
     gamewidget.cpp \
     main.cpp \
     npc.cpp \
@@ -26,6 +27,7 @@ HEADERS += \
     animationplayer.h \
     enemy.h \
     entity.h \
+    fragment.h \
     gamewidget.h \
     npc.h \
     player.h \
