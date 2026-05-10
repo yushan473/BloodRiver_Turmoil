@@ -34,15 +34,15 @@ void Player::update(float deltaSeconds)
 
     if (jumpPressed) {
         if (onGround) {
-            // 地面跳跃
+            //地面跳跃
             velocityY = JUMP_FORCE;
             onGround = false;
             jumpPressed = false;
-            doubleJumpUsed = false;// 重置二段跳标记
-            canDoubleJump = true;// 允许二段跳
+            doubleJumpUsed = false;//重置二段跳标记
+            canDoubleJump = true;//允许二段跳
         }
         else if (canDoubleJump && !doubleJumpUsed) {
-            // 二段跳
+            //二段跳
             velocityY = JUMP_FORCE;
             doubleJumpUsed = true;
             jumpPressed = false;
@@ -74,7 +74,7 @@ void Player::update(float deltaSeconds)
         skill.updateCooldown(deltaSeconds);
     }
 
-    //动画（大招时不允许切换）
+    //动画
     if (!isAttacking && !isPlayingSuper) {
         if (!onGround) {
             if (jumpClip && animPlayer.getCurrentClip() != jumpClip) {
@@ -128,11 +128,9 @@ void Player::draw(QPainter* painter) const
         int x, y;
 
         if (isPlayingSuper) {
-            // 大招动画：强制居中绘制，让玩家在大招动画中间
             x = transform.position.x() - frame.width() / 2;
             y = transform.position.y() - frame.height() / 2;
         } else {
-            // 普通动画：原来的绘制逻辑
             x = transform.position.x() - frame.width() / 2;
             y = transform.position.y() - frame.height() + 12;
         }
@@ -177,9 +175,9 @@ void Player::takeDamage(int amount)
 
 void Player::playSuperAnimation()
 {
-    qDebug() << "playSuperAnimation 被调用";
+    //qDebug() << "playSuperAnimation 被调用";
     if (superClip) {
-        qDebug() << "superClip 不为空，开始播放";
+        //qDebug() << "superClip 不为空，开始播放";
         animPlayer.play(superClip, false);
         isPlayingSuper = true;
     } else {

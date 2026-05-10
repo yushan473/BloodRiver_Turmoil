@@ -3,12 +3,10 @@
 #include "Enemy.h"
 #include "NPC.h"
 #include "AnimationClip.h"
-#include "AnimationPlayer.h"
 #include <QPainter>
 #include <QElapsedTimer>
 #include <QKeyEvent>
 #include <QDebug>
-#include <QRandomGenerator>
 
 GameWidget::GameWidget(QWidget *parent)
     : QWidget(parent)
@@ -26,7 +24,7 @@ GameWidget::GameWidget(QWidget *parent)
     bgMusic->setAudioOutput(audioOutput);
     bgMusic->setSource(QUrl("qrc:/res/music/bgm.mp3"));
     bgMusic->setLoops(QMediaPlayer::Infinite);
-    audioOutput->setVolume(0.5);
+    audioOutput->setVolume(0.3);
     bgMusic->play();
 
     musicOnImage.load(":/res/image/music_on.png");
@@ -41,14 +39,19 @@ GameWidget::~GameWidget()
     for (int i = 0; i < enemies.size(); i++) {
         delete enemies[i];
     }
-    enemies.clear();}
+    enemies.clear();
+    for (int i = 0; i < fragments.size(); i++) {
+        delete fragments[i];
+    }
+    fragments.clear();
+}
 
 void GameWidget::loadBackground()
 {
     background.load(":/res/image/bg_loop.png");
 
     if (background.isNull()) {
-        qDebug() << "bg_loop.png 加载失败！";
+       // qDebug() << "bg_loop.png 加载失败！";
         background = QPixmap(1024, 512);
         background.fill(QColor(100, 150, 200));
     }
@@ -111,25 +114,12 @@ void GameWidget::gameUpdate()
 
     player.update(deltaSec);
 
-    if (player.isPlayingSuper && player.getAnimationPlayer().isFinished()) {
-        // 等待 0.3 秒再清屏
-        QTimer::singleShot(300, this, [this]() {
-            for (int i = 0; i < enemies.size(); i++) {
-                delete enemies[i];
-            }
-            enemies.clear();
-            gameState = PHASE_WIN;
-            isRunning = false;
-            update();
-        });
-    }
-
     //刷怪
     if (gameState == PHASE_INGAME && !isFrozen)
     {
         spawnTimer -= deltaSec;
 
-        // 动态加快刷怪
+        //动态加快刷怪
         float progress = (float)enemies.size() / MAX_ENEMIES;
         float targetInterval = 3.0f - (3.0f - MIN_SPAWN_INTERVAL) * progress;
         spawnInterval = targetInterval;
@@ -148,7 +138,6 @@ void GameWidget::gameUpdate()
 
             Enemy* newEnemy = new Enemy(QPointF(spawnX, spawnY), type);
 
-            //绑定动画
             if (type == ENEMY_XIEQIANJI) newEnemy->setAttackClip(&xieqianjiClip);
             else if (type == ENEMY_MUYINZHEN) newEnemy->setAttackClip(&muyinzhenClip);
             else if (type == ENEMY_SUZE) newEnemy->setAttackClip(&suzeClip);
@@ -171,13 +160,13 @@ void GameWidget::gameUpdate()
             while (distanceSinceLastFragment >= FRAGMENT_SPAWN_DISTANCE) {
                 distanceSinceLastFragment -= FRAGMENT_SPAWN_DISTANCE;
 
-                //生成位置 玩家右侧200-400
+                //生成位置
                 float spawnX = currentPlayerX + 200 + (rand() % 600);
                 float spawnY;
                 bool isHigh;
 
-                // 50%概率生成高碎片（需要二段跳）
-                if (rand() % 2 == 0) {
+                // 概率生成高碎片（需要二段跳）
+                if (rand() %100 <70) {
                     isHigh = true;
                     spawnY = 270.0f;
                 } else {
@@ -217,13 +206,14 @@ void GameWidget::gameUpdate()
 
     int targetX = player.getCollisionRect().center().x() - 256;
     cameraX = targetX;
-    // 相机最小值不低于0
+    //最小值不低于0
     if (cameraX < 0) cameraX = 0;
 
     for (int i = 0; i < enemies.size(); i++) {
         enemies[i]->setPlayerPosition(player.transform.position);
         enemies[i]->update(deltaSec);
     }
+
     if (npc) {
         npc->update(deltaSec);
         if (!showDialog && npc->isPlayerNearby(player.getCollisionRect().center())) {
@@ -244,9 +234,9 @@ void GameWidget::gameUpdate()
     //碎片拾取
     for (int i = fragments.size() - 1; i >= 0; i--) {
         if (fragments[i]->getCollisionRect().intersects(player.getCollisionRect())) {
-            // 高碎片需要二段跳才能捡
+            //高碎片需要二段跳才能捡
             if (fragments[i]->isHighFragment() && !player.canDoubleJump) {
-                continue;  // 不能捡，跳过
+                continue;  //不能捡，跳过
             }
 
             delete fragments[i];
@@ -287,7 +277,7 @@ void GameWidget::paintEvent(QPaintEvent* event)
     bufferPainter.translate(-cameraX, 0);
 
     if (!background.isNull()) {
-        int sw = 1024;                // 背景图宽度
+        int sw = 1024;
         int startX = (cameraX / sw) * sw - sw;
 
         for (int x = startX; x <= cameraX + 512; x += sw) {
@@ -301,7 +291,6 @@ void GameWidget::paintEvent(QPaintEvent* event)
 
     bufferPainter.setRenderHint(QPainter::SmoothPixmapTransform, false);
 
-    // 界面绘制（不受相机影响）
     if (gameState == PHASE_START) {
         bufferPainter.resetTransform();
         if (!startImage.isNull()) bufferPainter.drawPixmap(0, 0, startImage);
@@ -325,9 +314,9 @@ void GameWidget::paintEvent(QPaintEvent* event)
         if (npc) npc->draw(&bufferPainter);
         if (showDialog && currentDialogIndex < dialogImages.size()) {
             int dialogY = (512 - 192) / 2;
-            bufferPainter.resetTransform();  // 对话图片不随相机
+            bufferPainter.resetTransform();  //对话图片不随相机
             bufferPainter.drawPixmap(0, dialogY, dialogImages[currentDialogIndex]);
-            bufferPainter.translate(-cameraX, 0);  // 恢复相机变换
+            bufferPainter.translate(-cameraX, 0);  //恢复相机变换
         }
         if (gameState == PHASE_WIN) {
             qDebug() << "绘制胜利画面，successImage是否为空:" << successImage.isNull();
@@ -337,19 +326,18 @@ void GameWidget::paintEvent(QPaintEvent* event)
     }
 
 
-    // 显示碎片数量
-    bufferPainter.resetTransform();  // 确保不受相机影响
+    //显示碎片数量
+    bufferPainter.resetTransform();  //确保不受相机影响
     bufferPainter.setPen(Qt::white);
     bufferPainter.setFont(QFont("SimHei", 16));
     bufferPainter.drawText(10, 30, QString("眠龙剑碎片: %1 / %2").arg(collectedFragments).arg(TARGET_FRAGMENTS));
 
-    // 如果满了，加个提示
     if (collectedFragments >= TARGET_FRAGMENTS) {
         bufferPainter.setPen(Qt::red);
         bufferPainter.drawText(10, 60, "按 R 释放十八剑阵通关！");
     }
 
-    // 显示倒计时（5分钟 - 已过时间）
+    //倒计时
     int remaining = 300 - (int)gameTimer;
     int minutes = remaining / 60;
     int seconds = remaining % 60;
@@ -361,13 +349,13 @@ void GameWidget::paintEvent(QPaintEvent* event)
          .arg(minutes, 2, 10, QChar('0'))
          .arg(seconds, 2, 10, QChar('0')));
 
-    // 时间到游戏失败
+    //时间到游戏失败
     if (remaining <= 0 && gameState == PHASE_INGAME) {
         gameState = PHASE_GAMEOVER;
         isRunning = false;
     }
 
-    // UI按钮（不受相机影响）
+    //UI按钮（不受相机影响
     bufferPainter.resetTransform();
     int btnX = 512 - 32;
     int btnY = 8;
@@ -484,7 +472,6 @@ void GameWidget::keyPressEvent(QKeyEvent* event)
     case Qt::Key_R:
         if (collectedFragments >= TARGET_FRAGMENTS) {
              player.playSuperAnimation();
-            // 延迟 1.5 秒后清屏（和动画时长匹配）
             QTimer::singleShot(1500, this, [this]() {
                 for (int i = 0; i < enemies.size(); i++) {
                     delete enemies[i];

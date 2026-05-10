@@ -7,7 +7,7 @@ class Skill
 {
 public:
     QString name;
-    int cooldownMs = 0;// ¿‰»¥ ±º‰
+    int cooldownMs = 0;
     int damage = 0;
     //AnimationClip* animationClip = nullptr;
 

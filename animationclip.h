@@ -17,10 +17,8 @@ public:
 
     void loadFromSpriteSheet(const QString& path, int frameCount, int frameDurationMs);
 
-    // 手动添加
     void addFrame(const QPixmap& pix, int durationMs);
 
-    // 获取所有帧
     const std::vector<Frame>& frames() const { return framesList; }
     bool isValid() const { return !framesList.empty(); }
 

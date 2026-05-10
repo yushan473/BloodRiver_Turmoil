@@ -9,7 +9,6 @@ class Entity
 public:
     virtual ~Entity() = default;
 
-    // ´¿Ðéº¯Êý
     virtual void update(float deltaSeconds) = 0;
     virtual void draw(QPainter* painter) const = 0;
     virtual QRectF getCollisionRect() const = 0;
