@@ -6,7 +6,6 @@
 struct Transform
 {
     QPointF position;
-
     void translate(const QPointF& delta) { position += delta; }
     void setPosition(float x, float y) { position = {x, y}; }
 };
